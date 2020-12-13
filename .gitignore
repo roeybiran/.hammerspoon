@@ -1,0 +1,6 @@
+.DS_Store
+cloudSettings.plist
+*.code-workspace
+.vscode
+hs
+wip
