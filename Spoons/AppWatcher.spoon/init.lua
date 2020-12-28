@@ -18,7 +18,15 @@ local _watcher = nil
 local frontAppBundleID = nil
 local windowFilter = nil
 
+local Canvas = require("hs.canvas")
+local canvas = Canvas.new(hs.screen.mainScreen():frame())
+canvas:level(hs.canvas.windowLevels.floating)
+
 local function mainCallback(_, event, appObj)
+
+  -- print(event, hs.application.watcher.activated)
+  -- print(event, hs.application.watcher.deactivated)
+
   local newBundleID = appObj:bundleID()
 
   if event ~= "FROM_WINDOW_WATCHER" then
@@ -36,6 +44,18 @@ local function mainCallback(_, event, appObj)
   end
 
   -- print(newBundleID)
+  if event == Application.watcher.activated then
+    -- local focusedWindow = appObj:focusedWindow():frame()
+    -- canvas[1] = {
+    --   type = "rectangle",
+    --   action = "stroke",
+    --   strokeColor = {red = 1},
+    --   strokeWidth = 3,
+    --   roundedRectRadii = {xRadius = 5, yRadius = 5}
+    -- }
+    -- canvas:frame(focusedWindow)
+    -- canvas:show()
+  end
 end
 
 local function windowFilterCallback(hsWindow, _, event)

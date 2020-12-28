@@ -263,10 +263,17 @@ local function setLayoutForURL(_, _, _, _)
   KeyCodes.setLayout(newLayout)
 end
 
-local function addObserver(appObj)
+local function addKeyboardLayoutForURLObserver(appObj)
   local pid = appObj:pid()
   _observer = Observer.new(pid)
   local element = AX.applicationElement(appObj)
+  -- if Safari has just been launched, this may return "*accessibility error* (0x60000104cbf8)"
+  -- this value is not nil so we need to check by casting
+  if not element:asHSApplication() then
+    Timer.doAfter(3, function() addKeyboardLayoutForURLObserver(_appObj) end)
+    return
+  end
+
   _observer:addWatcher(element, "AXTitleChanged")
   _observer:callback(setLayoutForURL)
   _observer:start()
@@ -338,7 +345,7 @@ end
 function obj:start(appObj)
   _appObj = appObj
   _modal:enter()
-  addObserver(appObj)
+  addKeyboardLayoutForURLObserver(appObj)
   return self
 end
 
@@ -360,41 +367,3 @@ function obj:init()
 end
 
 return obj
-
--- local function showNavMenus(appObj, direction)
---   local button
---   if direction == "forward" then
---     button = 2
---   else
---     button = 1
---   end
---   UI.getUIElement(appObj:mainWindow(), {{"AXToolbar", 1}, {"AXGroup", 1}, {"AXButton", button}}):performAction("AXShowMenu")
--- end
-
--- local function savePageAsPDF()
---   AppleScript([[
---     tell application "System Events"
---       tell process "Safari"
---         tell menu bar 1
---           tell menu bar item "File"
---             tell menu 1
---               click (first menu item whose title contains "Print")
---             end tell
---           end tell
---         end tell
---         tell window 1
---           repeat until sheet 1 exists
---           end repeat
---           tell sheet 1
---             click menu button 1 -- "PDF"
---             delay 0.2
---             tell menu button 1
---               tell menu 1
---                 click menu item "Save as PDF"
---               end tell
---             end tell
---           end tell
---         end tell
---       end tell
---     end tell]])
--- end
