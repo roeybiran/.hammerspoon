@@ -21,32 +21,33 @@ obj.author = "roeybiran <roeybiran@icloud.com>"
 obj.homepage = "https://github.com/Hammerspoon/Spoons"
 obj.license = "MIT - https://opensource.org/licenses/MIT"
 
-local keyboardLayoutSwitcherExcludedApps =
-    {"at.obdev.LaunchBar", "com.contextsformac.Contexts"}
+local keyboardLayoutSwitcherExcludedApps = {"at.obdev.LaunchBar", "com.contextsformac.Contexts"}
 
 -- called when the key to toggle the layout is pressed
 local function toggleInputSource()
-    local bundleID = Window.frontmostWindow():application():bundleID()
-    local currentLayout = Keycodes.currentLayout()
-    local newLayout = "ABC"
-    if currentLayout == "ABC" then newLayout = "Hebrew" end
+  local bundleID = Window.frontmostWindow():application():bundleID()
+  local currentLayout = Keycodes.currentLayout()
+  local newLayout = "ABC"
+  if currentLayout == "ABC" then
+    newLayout = "Hebrew"
+  end
 
-    Keycodes.setLayout(newLayout)
+  Keycodes.setLayout(newLayout)
 
-    if FNUtils.contains(keyboardLayoutSwitcherExcludedApps, bundleID) then
-        return
-    end
+  if FNUtils.contains(keyboardLayoutSwitcherExcludedApps, bundleID) then
+    return
+  end
 
-    if bundleID == "com.apple.Safari" then
-        spoon._Safari:saveLayoutForCurrentURL(newLayout)
-    end
+  if bundleID == "com.apple.Safari" then
+    spoon._Safari:saveLayoutForCurrentURL(newLayout)
+  end
 
-    local settingsTable = Settings.get("RBAppsLastActiveKeyboardLayouts") or {}
-    settingsTable[bundleID] = {
-        ["LastActiveKeyboardLayout"] = newLayout,
-        ["LastActiveKeyboardLayoutTimestamp"] = os.time()
-    }
-    Settings.set("RBAppsLastActiveKeyboardLayouts", settingsTable)
+  local settingsTable = Settings.get("RBAppsLastActiveKeyboardLayouts") or {}
+  settingsTable[bundleID] = {
+    ["LastActiveKeyboardLayout"] = newLayout,
+    ["LastActiveKeyboardLayoutTimestamp"] = os.time(),
+  }
+  Settings.set("RBAppsLastActiveKeyboardLayouts", settingsTable)
 end
 
 --- KeyboardLayoutManager:setInputSource(bundleid)
@@ -60,20 +61,22 @@ end
 ---  * `bundleid` - a string, the bundle identifier of the app.
 ---
 function obj:setInputSource(bundleid)
-    -- default to abc if no saved setting
-    local newLayout = "ABC"
-    -- special handling for safari
-    local settingsTable = Settings.get("RBAppsLastActiveKeyboardLayouts") or {}
-    local appSetting = settingsTable[bundleid]
-    if appSetting then
-        -- TODO: reset back to abc based on timestamp?
-        newLayout = appSetting["LastActiveKeyboardLayout"]
-    end
-    -- ignore for safari
+  -- default to abc if no saved setting
+  local newLayout = "ABC"
+  -- special handling for safari
+  local settingsTable = Settings.get("RBAppsLastActiveKeyboardLayouts") or {}
+  local appSetting = settingsTable[bundleid]
+  if appSetting then
+    -- TODO: reset back to abc based on timestamp?
+    newLayout = appSetting["LastActiveKeyboardLayout"]
+  end
+  -- ignore for safari
 
-    if bundleid == "com.apple.Safari" then return end
-    Keycodes.setLayout(newLayout)
-    return self
+  if bundleid == "com.apple.Safari" then
+    return
+  end
+  Keycodes.setLayout(newLayout)
+  return self
 end
 
 --- KeyboardLayoutManager:bindHotkeys(mapping)
@@ -88,9 +91,9 @@ end
 ---   * `toggleInputSource` - switch between the "Hebrew" and "ABC" layouts.
 ---
 function obj:bindHotKeys(_mapping)
-    local def = {toggleInputSource = function() toggleInputSource() end}
-    Spoons.bindHotkeysToSpec(def, _mapping)
-    return self
+  local def = {toggleInputSource = function() toggleInputSource() end}
+  Spoons.bindHotkeysToSpec(def, _mapping)
+  return self
 end
 
 return obj

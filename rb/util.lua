@@ -40,22 +40,21 @@ function obj.doubleLeftClick(coords, mods, restoring)
     originalMousePosition = Mouse.getAbsolutePosition()
   end
   local point = Geometry.point(coords)
-  if not mods then
-    mods = {}
-  end
+  mods = mods or {}
   local clickState = Eventtap.event.properties.mouseEventClickState
-  Eventtap.event.newMouseEvent(Eventtap.event.types["leftMouseDown"], point):setProperty(clickState, 1):setFlags(mods):post()
-  Eventtap.event.newMouseEvent(Eventtap.event.types["leftMouseUp"], point):setProperty(clickState, 1):setFlags(mods):post()
-  Timer.doAfter(
-    0.1,
-    function()
-      Eventtap.event.newMouseEvent(Eventtap.event.types["leftMouseDown"], point):setProperty(clickState, 2):setFlags(mods):post()
-      Eventtap.event.newMouseEvent(Eventtap.event.types["leftMouseUp"], point):setProperty(clickState, 2):setFlags(mods):post()
-      if restoring then
-        Mouse.setAbsolutePosition(originalMousePosition)
-      end
+  Eventtap.event.newMouseEvent(Eventtap.event.types["leftMouseDown"], point):setProperty(clickState, 1):setFlags(mods)
+      :post()
+  Eventtap.event.newMouseEvent(Eventtap.event.types["leftMouseUp"], point):setProperty(clickState, 1):setFlags(mods)
+      :post()
+  Timer.doAfter(0.1, function()
+    Eventtap.event.newMouseEvent(Eventtap.event.types["leftMouseDown"], point):setProperty(clickState, 2):setFlags(mods)
+        :post()
+    Eventtap.event.newMouseEvent(Eventtap.event.types["leftMouseUp"], point):setProperty(clickState, 2):setFlags(mods)
+        :post()
+    if restoring then
+      Mouse.setAbsolutePosition(originalMousePosition)
     end
-  )
+  end)
 end
 
 function obj.strictShortcut(keyBinding, app, modal, conditionalFunction, successFunction)
@@ -85,7 +84,7 @@ obj.cloudSettings = {
     local rootObject = Plist.read(cloudSettingsPlistFile)
     rootObject[key] = value
     Plist.write(cloudSettingsPlistFile, rootObject)
-  end
+  end,
 }
 
 return obj

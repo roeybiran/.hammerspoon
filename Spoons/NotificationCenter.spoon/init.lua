@@ -6,8 +6,8 @@ local ax = require("hs.axuielement")
 local application = require("hs.application")
 local Mouse = require("hs.mouse")
 local eventtap = require("hs.eventtap")
-local geometry = require("hs.geometry")
 local Timer = require("hs.timer")
+local FN = require("hs.fnutils")
 local hs = hs
 
 local obj = {}
@@ -19,63 +19,78 @@ obj.author = "roeybiran <roeybiran@icloud.com>"
 obj.homepage = "https://github.com/Hammerspoon/Spoons"
 obj.license = "MIT - https://opensource.org/licenses/MIT"
 
-local function getWindow()
-  local notifCenterPanel = application.applicationsForBundleID("com.apple.notificationcenterui")[1]:focusedWindow()
-  if notifCenterPanel then
-    return ax.windowElement(notifCenterPanel)
-  end
-end
-
 local function toggle()
-  -- local currentMousePos = Mouse.getAbsolutePosition()
-  -- local iconPos =
-  --     ui.getUIElement(application("Control Center"), {{"AXMenuBar", 1}, {"AXMenuBarItem", 1}}):attributeValue(
-  --         "AXPosition")
-  -- local x = iconPos.x + 10
-  -- local y = iconPos.y + 10
-  -- eventtap.leftClick(geometry.point({x, y}))
-  -- Mouse.setAbsolutePosition(currentMousePos)
-    ui.getUIElement(application("Control Center"), {{"AXMenuBar", 1}, {"AXMenuBarItem", 1}}):performAction("AXPress")
+  ui.getUIElement(application("Control Center"),
+                  {{"AXMenuBar", 1}, {"AXMenuBarItem", 1}}):performAction(
+      "AXPress")
 end
 
+local function moveCursorToBanner(theWindow, shouldClick)
+  local windowPosition = theWindow:attributeValue("AXPosition")
+  local x = windowPosition.x + 40
+  local y = windowPosition.y + 40
+  local originalPosition = Mouse.getAbsolutePosition()
+  local newPosition = {x = x, y = y}
+  Mouse.setAbsolutePosition(newPosition)
+  if shouldClick then
+    eventtap.leftClick(newPosition)
+  end
+  Timer.doAfter(0.5, function() Mouse.setAbsolutePosition(originalPosition) end)
+end
+
+-- the accessibility structure of notifications has changed drastically in Big Sur:
+-- all banners are nested under the "AXOpaqueProviderGroup", where each banner is an "AXGroup"
 local function clickButton(theButton)
-  local app = application.applicationsForBundleID("com.apple.notificationcenterui")[1]
+  local app = application.applicationsForBundleID(
+                  "com.apple.notificationcenterui")[1]
   local axApp = ax.applicationElement(app)
-  local allWindows = axApp:attributeValue("AXChildren")
-  for _, theWindow in ipairs(allWindows) do
-    local button1 = ui.getUIElement(theWindow, {{"AXButton", 1}})
-    -- checking for a banner/alert style notification
-    -- if a banner, move mouse cursor to reveal the buttons
-    -- "button" 3 -> click on the banner and return
-    if not button1 or theButton == 3 then
-      local windowPosition = theWindow:attributeValue("AXPosition")
-      local x = windowPosition.x + 10
-      local y = windowPosition.y + 10
-      local originalPosition = Mouse.getAbsolutePosition()
-      local newPosition = {x = x, y = y}
-      Mouse.setAbsolutePosition(newPosition)
-      button1 = ui.getUIElement(theWindow, {{"AXButton", 1}})
-      Timer.doAfter(0.5, function() Mouse.setAbsolutePosition(originalPosition) end)
-      if theButton == 3 then
-        eventtap.leftClick(newPosition)
-        return
-      end
+  local container = ui.getUIElement(axApp, {
+    {"AXWindow", 1},
+    {"AXScrollArea", 1},
+    {"AXOpaqueProviderGroup", 1},
+  }):attributeValue("AXChildren")
+
+  local banners = FN.filter(container, function(element)
+    return element:attributeValue("AXRole") == "AXGroup"
+  end)
+
+  for _, banner in ipairs(banners) do
+    -- button "3" -> click on the banner and return
+    if theButton == 3 then
+      moveCursorToBanner(banner, true)
+      return
     end
-    if button1 then
+
+    -- move mouse cursor to the banner to reveal the buttons
+    moveCursorToBanner(banner, false)
+
+    Timer.doAfter(0.2, function()
+      local targetButton
+      -- the close button
       if theButton == 1 then
-        button1:performAction("AXPress")
-        return
+        targetButton = ui.getUIElement(banner, {{"AXButton", 1}})
       end
+      -- the "action" button
       if theButton == 2 then
-        local button2 = ui.getUIElement(theWindow, {{"AXMenuButton", 1}})
-        if not button2 then
-          ui.getUIElement(theWindow, {{"AXButton", 2}}):performAction("AXPress")
-          return
-        end
-        ui.getUIElement(theWindow, {{"AXMenuButton", 1}}):setTimeout(0.2):performAction("AXPress")
-        button2:attributeValue("AXChildren")[1]:attributeValue("AXChildren")[1]:setAttributeValue("AXSelected", true)
+        targetButton = ui.getUIElement(banner, {{"AXButton", 3}})
       end
-    end
+      targetButton:performAction("AXPress")
+    end)
+
+    return
+
+    -- if theButton == 2 then
+    --   local button2 = ui.getUIElement(theWindow, {{"AXMenuButton", 1}})
+    --   if not button2 then
+    --     ui.getUIElement(theWindow, {{"AXButton", 2}}):performAction("AXPress")
+    --     return
+    --   end
+    --   ui.getUIElement(theWindow, {{"AXMenuButton", 1}}):setTimeout(0.2)
+    --       :performAction("AXPress")
+    --   button2:attributeValue("AXChildren")[1]:attributeValue("AXChildren")[1]:setAttributeValue(
+    --       "AXSelected", true)
+    -- end
+
   end
 end
 
@@ -97,7 +112,7 @@ function obj:bindHotKeys(_mapping)
     firstButton = function() clickButton(1) end,
     secondButton = function() clickButton(2) end,
     thirdButton = function() clickButton(3) end,
-    toggle = function() toggle() end
+    toggle = function() toggle() end,
   }
   hs.spoons.bindHotkeysToSpec(def, _mapping)
   return self

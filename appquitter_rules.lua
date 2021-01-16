@@ -1,4 +1,4 @@
-local rules = {
+return {
   "app.soulver.mac",
   "com.adobe.AfterEffects",
   "com.adobe.illustrator",
@@ -56,6 +56,7 @@ local rules = {
   "com.apple.VoiceMemos",
   "com.apple.VoiceOverUtility",
   "com.bjango.istatmenus",
+  "com.bohemiancoding.sketch3",
   "com.colliderli.iina",
   "com.coteditor.CotEditor",
   "com.cryptic-apps.hopper-web-4",
@@ -82,14 +83,13 @@ local rules = {
   "net.shinyfrog.panda",
   "net.sourceforge.sqlitebrowser",
   "net.televator.Vimari",
+  "pl.maketheweb.pixelsnap2",
   "us.zoom.xos",
   ["at.obdev.LaunchBar.ActionEditor"] = {quit = 0.5, hide = 0.5},
   ["com.apple.iphonesimulator"] = {quit = 1, hide = 0.5},
-  ["com.apple.Preview"] = {quit = 1, hide = 0.5},
   ["com.google.Chrome"] = {quit = 4, hide = 1},
   ["com.kapeli.dashdoc"] = {quit = 6, hide = 1},
   ["com.latenightsw.ScriptDebugger7"] = {quit = 1, hide = 0.5},
   ["com.toggl.toggldesktop.TogglDesktop"] = {quit = 8, hide = 0.5},
-  ["fr.handbrake.HandBrake"] = {quit = 10, hide = 0.5}
+  ["fr.handbrake.HandBrake"] = {quit = 10, hide = 0.5},
 }
-return rules

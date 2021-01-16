@@ -41,33 +41,31 @@ local shellScript = script_path() .. "/process_path.sh"
 local filesToIgnore = {".DS_Store", ".localized", ".", ".."}
 local processedDownloadsInodes
 local pathWatcher
-local delayedTimer
+local throttledTimer
 
-local function pathWatcherCallbackFn()
-  delayedTimer:start()
-end
-
-local function delayedTimerCallbackFn()
+local function watcherCallback()
   local iteratedFiles = {}
   local pathsToProcess = {}
   local iterFn, dirObj = FS.dir(downloadsDir)
+
   if not iterFn then
     print(string.format("DownloadsWatcher FS.dir enumerator error: %s", dirObj))
     return
   end
+
   for file in iterFn, dirObj do
-    if not Fnutils.contains(filesToIgnore, file) then
-      if not file:match("%.download/?$") then
-        local fullPath = downloadsDir .. "/" .. file
-        local inode = FS.attributes(fullPath, "ino")
-        if not Fnutils.contains(processedDownloadsInodes, inode) then
-          table.insert(processedDownloadsInodes, inode)
-          table.insert(pathsToProcess, fullPath)
-        end
-        table.insert(iteratedFiles, file)
+    if not Fnutils.contains(filesToIgnore, file) and
+        not file:match("%.download/?$") then
+      local fullPath = downloadsDir .. "/" .. file
+      local inode = FS.attributes(fullPath, "ino")
+      if not Fnutils.contains(processedDownloadsInodes, inode) then
+        table.insert(processedDownloadsInodes, inode)
+        table.insert(pathsToProcess, fullPath)
       end
+      table.insert(iteratedFiles, file)
     end
   end
+
   if tableCount(iteratedFiles) == 0 then
     print("DownloadsWatcher: ~/Downloads emptied, clearing inodes list")
     Settings.clear(processedDownloadsInodesKey)
@@ -75,21 +73,22 @@ local function delayedTimerCallbackFn()
   else
     Settings.set(processedDownloadsInodesKey, processedDownloadsInodes)
   end
+
+  -- process the files
   for _, path in ipairs(pathsToProcess) do
     spoon.StatusBar:addTask()
-    Task.new(
-      shellScript,
-      function(_, stdout, stderr)
-        if string.match(stderr, "%s+") then
-          print("DownloadsWatcher shell script stderr: ", stderr)
-        end
-        if string.match(stdout, "/Downloads/") then
-          Pasteboard.setContents(stdout)
-        end
-        spoon.StatusBar:removeTask()
-      end,
-      {path}
-    ):start()
+    Task.new(shellScript, function(_, stdout, stderr)
+      if string.match(stderr, "%s+") then
+        print("DownloadsWatcher shell script stderr: ", stderr)
+      end
+      if string.match(stdout, "%s+") then
+        print("DownloadWatcher shell script stdour: ", stdout)
+      end
+      if string.match(stdout, "/Downloads/") then
+        Pasteboard.setContents(stdout)
+      end
+      spoon.StatusBar:removeTask()
+    end, {path}):start()
   end
 end
 
@@ -116,9 +115,10 @@ function obj:start()
 end
 
 function obj:init()
-  delayedTimer = Timer.delayed.new(1, delayedTimerCallbackFn)
+  throttledTimer = Timer.delayed.new(1, watcherCallback)
   processedDownloadsInodes = Settings.get(processedDownloadsInodesKey) or {}
-  pathWatcher = PathWatcher.new(downloadsDir, pathWatcherCallbackFn)
+  pathWatcher = PathWatcher.new(downloadsDir,
+                                function() throttledTimer:start() end)
   return self
 end
 

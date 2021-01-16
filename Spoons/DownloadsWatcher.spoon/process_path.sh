@@ -1,5 +1,11 @@
 #!/bin/bash
 
+parsepath() {
+	dir="$(dirname "${1}")"
+	name_no_ext="$(basename "${1}" | cut -f 1 -d '.')"
+	printf "%s\n" "${dir}/${name_no_ext}"
+}
+
 shopt -s nocasematch
 
 export PATH="$PATH:/bin:/usr/bin"
@@ -15,22 +21,13 @@ done
 DIR="$(dirname "${SOURCE}")"
 
 path="${1}"
-parsepath() {
-	dir="$(dirname "${1}")"
-	name_no_ext="$(basename "${1}" | cut -f 1 -d '.')"
-	printf "%s\n" "${dir}/${name_no_ext}"
-}
-
 
 output=""
 case "${path}" in
+*".pdf")
+	"$DIR/get_pdf_text.py" "$path"
+	;;
 *".zip")
-	# a naive check for a wordpress plugin
-	# TODO: find a better solution
-	# if unzip -l "${path}" | grep php; then
-		# echo "Skipping unarchiving a WordPress plugin/theme"
-		# exit 0
-	# fi
 	target="$(parsepath "${path}")"
 	mkdir -p "${target}"
 	ditto -xk "${path}" "${target}"

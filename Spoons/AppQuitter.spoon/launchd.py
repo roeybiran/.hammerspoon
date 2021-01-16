@@ -11,15 +11,32 @@ import subprocess
 
 def run_applescript(script, app):
     try:
-        result = subprocess.check_output(["/usr/bin/osascript", "-e", "on run argv", "-e", "try",
-                                          "-e", script, "-e", "end try", "-e", "end run", app]).rstrip()
+        result = subprocess.check_output(
+            [
+                "/usr/bin/osascript",
+                "-e",
+                "on run argv",
+                "-e",
+                "try",
+                "-e",
+                script,
+                "-e",
+                "end try",
+                "-e",
+                "end run",
+                app,
+            ]
+        ).rstrip()
         return result
     except subprocess.CalledProcessError as err:
         print("catched error: {}".format(err))
 
 
 def is_running(app):
-    return run_applescript("return application id (item 1 of argv) is running", app) == "true"
+    return (
+        run_applescript("return application id (item 1 of argv) is running", app)
+        == "true"
+    )
 
 
 def is_hidden(app):
@@ -32,7 +49,10 @@ def is_hidden(app):
 
 
 def is_frontmost(app):
-    return run_applescript('return application id (item 1 of argv) is frontmost', app) == "true"
+    return (
+        run_applescript("return application id (item 1 of argv) is frontmost", app)
+        == "true"
+    )
 
 
 def hide_app(app):
@@ -47,11 +67,12 @@ def hide_app(app):
 
 
 def quit_app(app):
-    run_applescript('tell application id (item 1 of argv) to quit', app)
+    run_applescript("tell application id (item 1 of argv) to quit", app)
 
 
 PLIST_PATH = os.path.expanduser(
-    "~/Library/Preferences/com.rb.hs.appquitter.tracker.plist")
+    "~/Library/Preferences/com.rb.hs.appquitter.tracker.plist"
+)
 plist_obj = plistlib.readPlist(PLIST_PATH)
 
 new_plist = {}
