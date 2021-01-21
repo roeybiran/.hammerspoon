@@ -11,8 +11,10 @@ local Settings = require("hs.settings")
 local Spoons = require("hs.spoons")
 local FNUtils = require("hs.fnutils")
 local Window = require("hs.window")
+local Application = require("hs.application")
 local spoon = spoon
 local obj = {}
+local watcher = nil
 
 obj.__index = obj
 obj.name = "KeyboardLayoutManager"
@@ -24,7 +26,7 @@ obj.license = "MIT - https://opensource.org/licenses/MIT"
 local keyboardLayoutSwitcherExcludedApps = {"at.obdev.LaunchBar", "com.contextsformac.Contexts"}
 
 -- called when the key to toggle the layout is pressed
-local function toggleInputSource()
+local function setInputSourceOnKeyDown()
   local bundleID = Window.frontmostWindow():application():bundleID()
   local currentLayout = Keycodes.currentLayout()
   local newLayout = "ABC"
@@ -45,7 +47,7 @@ local function toggleInputSource()
   local settingsTable = Settings.get("RBAppsLastActiveKeyboardLayouts") or {}
   settingsTable[bundleID] = {
     ["LastActiveKeyboardLayout"] = newLayout,
-    ["LastActiveKeyboardLayoutTimestamp"] = os.time(),
+    ["LastActiveKeyboardLayoutTimestamp"] = os.time()
   }
   Settings.set("RBAppsLastActiveKeyboardLayouts", settingsTable)
 end
@@ -60,7 +62,7 @@ end
 ---
 ---  * `bundleid` - a string, the bundle identifier of the app.
 ---
-function obj:setInputSource(bundleid)
+local function setInputSourceOnAppActivation(bundleid)
   -- default to abc if no saved setting
   local newLayout = "ABC"
   -- special handling for safari
@@ -91,8 +93,29 @@ end
 ---   * `toggleInputSource` - switch between the "Hebrew" and "ABC" layouts.
 ---
 function obj:bindHotKeys(_mapping)
-  local def = {toggleInputSource = function() toggleInputSource() end}
+  local def = {
+    toggleInputSource = function()
+      setInputSourceOnKeyDown()
+    end
+  }
   Spoons.bindHotkeysToSpec(def, _mapping)
+  return self
+end
+
+function obj:start()
+  watcher:start()
+  return self
+end
+
+function obj:init()
+  watcher =
+    Application.watcher.new(
+    function(_, event, appObj)
+      if event == Application.watcher.activated then
+        setInputSourceOnAppActivation(appObj:bundleID())
+      end
+    end
+  )
   return self
 end
 

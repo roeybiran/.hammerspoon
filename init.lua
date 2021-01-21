@@ -36,12 +36,14 @@ end
 local spoon = spoon
 
 -- start (ORDER MATTERS!)
-spoon.AppQuitter:start({
-  launchdRunInterval = 600, --- 10 minutes
-  rules = require("appquitter_rules"),
-  defaultQuitInterval = 14400, -- 4 hours
-  defaultHideInterval = 1800, -- 30 minutes
-})
+spoon.AppQuitter:start(
+  {
+    launchdRunInterval = 600, --- 10 minutes
+    rules = require("appquitter_rules"),
+    defaultQuitInterval = 14400, -- 4 hours
+    defaultHideInterval = 1800 -- 30 minutes
+  }
+)
 spoon.ApplicationModalManager:start()
 spoon.AppearanceWatcher:start()
 spoon.ConfigWatcher:start()
@@ -52,7 +54,7 @@ spoon.StatusBar:start()
 -- HOTKEYS ---
 local hotkeys = require("global_hotkeys")
 -- global
-spoon.KeyboardLayoutManager:bindHotKeys(hotkeys.keyboardLayoutManager)
+spoon.KeyboardLayoutManager:bindHotKeys(hotkeys.keyboardLayoutManager):start()
 spoon.Globals:bindHotKeys(hotkeys.globals)
 spoon.WindowManager:bindHotKeys(hotkeys.windowManager)
 spoon.NotificationCenter:bindHotKeys(hotkeys.notificationCenter)

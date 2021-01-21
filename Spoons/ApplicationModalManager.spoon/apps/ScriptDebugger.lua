@@ -21,7 +21,7 @@ local function pane2(appObj)
     {"AXSplitGroup", 1},
     {"AXGroup", 1},
     {"AXScrollArea", 1},
-    {"AXOutline", 1},
+    {"AXOutline", 1}
   }
   ui.getUIElement(appObj, _pane2):setAttributeValue("AXFocused", true)
 end
@@ -33,7 +33,7 @@ local function pane3(appObj)
     {"AXGroup", 1},
     {"AXSplitGroup", 1},
     {"AXScrollArea", 1},
-    {"AXWebArea", 1},
+    {"AXWebArea", 1}
   }
   ui.getUIElement(appObj, _pane3):setAttributeValue("AXFocused", true)
 end
@@ -44,7 +44,7 @@ local functions = {
   end,
   pane2 = function()
     pane2(_appObj)
-  end,
+  end
 }
 
 function obj:bindModalHotkeys(hotkeysTable)

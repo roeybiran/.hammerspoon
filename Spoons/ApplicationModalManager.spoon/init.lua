@@ -7,8 +7,8 @@
 local FS = require("hs.fs")
 local Application = require("hs.application")
 local Window = require("hs.window")
-local spoon = spoon
 local spoons = require("hs.spoons")
+local spoon = spoon
 local obj = {}
 
 obj.__index = obj
@@ -41,7 +41,6 @@ local function mainCallback(_, event, appObj)
     end
     frontAppBundleID = newBundleID
     updateAppModal(appObj, newBundleID)
-    spoon.KeyboardLayoutManager:setInputSource(newBundleID)
   end
 end
 
@@ -73,7 +72,7 @@ obj.transientApps = {
   ["Spotlight"] = {allowRoles = "AXSystemDialog"},
   ["Paletro"] = {allowRoles = "AXSystemDialog"},
   ["Contexts"] = false,
-  ["Emoji & Symbols"] = true,
+  ["Emoji & Symbols"] = true
 }
 
 --- AppWatcher.stop()
@@ -98,7 +97,7 @@ function obj:start()
   local allowedWindowFilterEvents = {
     Window.filter.windowCreated,
     Window.filter.windowDestroyed,
-    Window.filter.windowFocused,
+    Window.filter.windowFocused
   }
   -- on reload, enter modal (if any) for the front app (saves an redundant cmd+tab)
   local frontApp = Application.frontmostApplication()
@@ -129,7 +128,6 @@ function obj:init()
       end
     end
   end
-
   return self
 end
 
