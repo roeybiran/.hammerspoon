@@ -250,6 +250,7 @@ local function setLayoutForURL(_, _, _, _)
   if urlSetting then
     newLayout = urlSetting
   end
+  print(newLayout)
   KeyCodes.setLayout(newLayout)
 end
 
@@ -276,11 +277,9 @@ local function addKeyboardLayoutForURLObserver(appObj)
     end)
     return
   end
-
   _observer:addWatcher(element, "AXTitleChanged")
   _observer:callback(setLayoutForURL)
   _observer:start()
-  setLayoutForURL()
 end
 
 local functions = {
@@ -367,6 +366,7 @@ function obj:start(appObj)
   _appObj = appObj
   _modal:enter()
   addKeyboardLayoutForURLObserver(appObj)
+  setLayoutForURL()
   return self
 end
 

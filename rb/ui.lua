@@ -12,7 +12,7 @@ function obj.getUIElement(appOrWindowOrAx, uiPathTable)
   local role
   local indexOrAttribute
   local attributeValue
-  local childs
+  local children
 
   local targetElement
 
@@ -32,11 +32,11 @@ function obj.getUIElement(appOrWindowOrAx, uiPathTable)
     -- iterator
     n = 1
     -- all child UI elements
-    childs = targetElement:attributeValue("AXChildren")
+    children = targetElement:attributeValue("AXChildren")
 
-    -- if 0 childs, return
-    -- print(hs.inspect(childs))
-    if not childs or Util.tableCount(childs) == 0 then
+    -- if 0 children, return
+    -- print(hs.inspect(children))
+    if not children or Util.tableCount(children) == 0 then
       return nil
     end
 
@@ -48,7 +48,7 @@ function obj.getUIElement(appOrWindowOrAx, uiPathTable)
       attributeValue = pathItem[3]
     end
     match = false
-    for _, childElement in ipairs(childs) do
+    for _, childElement in ipairs(children) do
       -- checking for matching role
       if childElement:attributeValue("AXRole") == role then
         -- checking if a numeral index

@@ -26,23 +26,19 @@ obj.author = "roeybiran <roeybiran@icloud.com>"
 obj.homepage = "https://github.com/Hammerspoon/Spoons"
 obj.license = "MIT - https://opensource.org/licenses/MIT"
 
-local keyboardLayoutSwitcherExcludedApps = {"at.obdev.LaunchBar", "com.contextsformac.Contexts"}
+local avoidSwitchingInputSourceOnActivation = {"at.obdev.LaunchBar", "com.contextsformac.Contexts", "com.apple.Safari"}
 
 -- called when the key to toggle the layout is pressed
 local function setInputSourceOnKeyDown()
   local bundleID = Window.frontmostWindow():application():bundleID()
-  local currentLayout = Keycodes.currentLayout()
+
   local newLayout = "ABC"
-  if currentLayout == "ABC" then
+  if Keycodes.currentLayout() == "ABC" then
     newLayout = "Hebrew"
   end
 
   Keycodes.setLayout(newLayout)
   DistributedNotifications.post("InputSourceDidChange")
-
-  if FNUtils.contains(keyboardLayoutSwitcherExcludedApps, bundleID) then
-    return
-  end
 
   local settingsTable = Settings.get("RBAppsLastActiveKeyboardLayouts") or {}
   settingsTable[bundleID] = {
@@ -52,15 +48,18 @@ local function setInputSourceOnKeyDown()
   Settings.set("RBAppsLastActiveKeyboardLayouts", settingsTable)
 end
 
-local function setInputSourceOnAppActivation(bundleid)
+local function setInputSourceOnAppActivation(bundleID)
+  if FNUtils.contains(avoidSwitchingInputSourceOnActivation, bundleID) then
+    return
+  end
   -- default to abc if no saved setting
   local newLayout = "ABC"
   -- special handling for safari
   local settingsTable = Settings.get("RBAppsLastActiveKeyboardLayouts") or {}
-  local appSetting = settingsTable[bundleid]
-  if appSetting then
+  local oldSetting = settingsTable[bundleID]
+  if oldSetting then
     -- TODO: reset back to abc based on timestamp?
-    newLayout = appSetting["LastActiveKeyboardLayout"]
+    newLayout = oldSetting["LastActiveKeyboardLayout"]
   end
   Keycodes.setLayout(newLayout)
 end
