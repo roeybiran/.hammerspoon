@@ -7,15 +7,14 @@
 local FS = require("hs.fs")
 local Application = require("hs.application")
 local Window = require("hs.window")
-local spoons = require("hs.spoons")
-local spoon = spoon
+local Spoons = require("hs.spoons")
 local obj = {}
 
 obj.__index = obj
 obj.name = "ApplicationModalManager"
 obj.version = "1.0"
 obj.author = "roeybiran <roeybiran@icloud.com>"
-obj.homepage = "https://github.com/Hammerspoon/Spoons"
+obj.homepage = "https://github.com/Hammerspoon/spoons"
 obj.license = "MIT - https://opensource.org/licenses/MIT"
 
 local _watcher = nil
@@ -72,7 +71,7 @@ obj.transientApps = {
   ["Spotlight"] = {allowRoles = "AXSystemDialog"},
   ["Paletro"] = {allowRoles = "AXSystemDialog"},
   ["Contexts"] = false,
-  ["Emoji & Symbols"] = true
+  ["Emoji & Symbols"] = true,
 }
 
 --- AppWatcher.stop()
@@ -97,12 +96,11 @@ function obj:start()
   local allowedWindowFilterEvents = {
     Window.filter.windowCreated,
     Window.filter.windowDestroyed,
-    Window.filter.windowFocused
+    Window.filter.windowFocused,
   }
   -- on reload, enter modal (if any) for the front app (saves an redundant cmd+tab)
   local frontApp = Application.frontmostApplication()
   if frontApp then
-    print("app watcher init frontapp ", frontApp)
     mainCallback(nil, Application.watcher.activated, frontApp)
   end
   _watcher:start()
@@ -115,12 +113,12 @@ function obj:init()
   windowFilter = Window.filter.new(false)
   _watcher = Application.watcher.new(mainCallback)
 
-  local app_hotkeys = dofile(spoons.resourcePath("app_hotkeys.lua"))
-  local iterFn, dirObj = FS.dir(spoons.resourcePath("apps/"))
+  local app_hotkeys = dofile(Spoons.resourcePath("app_hotkeys.lua"))
+  local iterFn, dirObj = FS.dir(Spoons.resourcePath("apps/"))
   if iterFn then
     for file in iterFn, dirObj do
       if string.sub(file, -3) == "lua" then
-        local module = dofile(spoons.resourcePath("apps/" .. file))
+        local module = dofile(Spoons.resourcePath("apps/" .. file))
         local hotkeys_for_app = app_hotkeys[module.bundleID] or {}
         module:init()
         module:bindModalHotkeys(hotkeys_for_app)

@@ -1,7 +1,6 @@
 --- === AppearanceWatcher ===
 ---
 --- Perform actions when the system's theme changes. Actions can be configured by editing the shell script inside the Spoon's directory.
-
 local task = require("hs.task")
 local settings = require("hs.settings")
 local PathWatcher = require("hs.pathwatcher")
@@ -30,33 +29,28 @@ local function setStyle()
   local currentSystemStyle = Host.interfaceStyle() or "Light"
   local cachedStyle = settings.get(cachedInterfaceStyleKey)
   if currentSystemStyle ~= cachedStyle then
-    local msg = string.format("AppearanceWatcher: detected a system style change, from %s to %s", cachedStyle, currentSystemStyle)
+    local msg = string.format("AppearanceWatcher: detected a system style change, from %s to %s", cachedStyle,
+                              currentSystemStyle)
     print(msg)
     if settings.get(appearanceWatcherActiveKey) == false then
       return
     end
     settings.set(cachedInterfaceStyleKey, currentSystemStyle)
-    task.new(
-      script_path() .. "/appearance.sh",
-      function(exitCode, stdOut, stdErr)
-        if exitCode > 0 then
-          msg = string.format([[AppearanceWatcher: appearance.sh exited with non-zero exit code (%s). stdout: %s, stderr: %s]], exitCode, stdOut, stdErr)
-          print(msg)
-        end
-      end,
-      {currentSystemStyle:lower()}
-    ):start()
+    task.new(script_path() .. "/appearance.sh", function(exitCode, stdOut, stdErr)
+      if exitCode > 0 then
+        msg = string.format(
+                  [[AppearanceWatcher: appearance.sh exited with non-zero exit code (%s). stdout: %s, stderr: %s]],
+                  exitCode, stdOut, stdErr)
+        print(msg)
+      end
+    end, {currentSystemStyle:lower()}):start()
   end
 end
 
 function obj.init()
-  watcher =
-    PathWatcher.new(
-    appearancePlist,
-    function()
-      setStyle()
-    end
-  )
+  watcher = PathWatcher.new(appearancePlist, function()
+    setStyle()
+  end)
 end
 
 --- AppearanceWatcher:stop()

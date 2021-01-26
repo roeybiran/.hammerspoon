@@ -8,6 +8,7 @@ local Settings = require("hs.settings")
 local UI = require("rb.ui")
 local Util = require("rb.util")
 local AX = require("hs.axuielement")
+local DistributedNotifications = require("hs.distributednotifications")
 local Observer = AX.observer
 local hs = hs
 
@@ -21,6 +22,7 @@ local _modal = nil
 local _appObj = nil
 local _observer = nil
 local layoutsPerURLKey = "RBSafariLayoutsForURL"
+local notficationObserver = nil
 
 obj.bundleID = "com.apple.Safari"
 
@@ -251,6 +253,14 @@ local function setLayoutForURL(_, _, _, _)
   KeyCodes.setLayout(newLayout)
 end
 
+local function saveLayoutForCurrentURL()
+  local currentLayout = KeyCodes.currentLayout()
+  local settingsTable = Settings.get(layoutsPerURLKey) or {}
+  local currentURL = getCurrentURL()
+  settingsTable[currentURL] = currentLayout
+  Settings.set(layoutsPerURLKey, settingsTable)
+end
+
 local function addKeyboardLayoutForURLObserver(appObj)
   local pid = appObj:pid()
   _observer = Observer.new(pid)
@@ -349,15 +359,11 @@ function obj:bindModalHotkeys(hotkeysTable)
   return self
 end
 
-function obj:saveLayoutForCurrentURL(newLayout)
-  local settingsTable = Settings.get(layoutsPerURLKey) or {}
-  local currentURL = getCurrentURL()
-  settingsTable[currentURL] = newLayout
-  Settings.set(layoutsPerURLKey, settingsTable)
-  return self
-end
-
 function obj:start(appObj)
+  if not notficationObserver then
+    notficationObserver = DistributedNotifications.new(saveLayoutForCurrentURL, "InputSourceDidChange")
+  end
+  notficationObserver:start()
   _appObj = appObj
   _modal:enter()
   addKeyboardLayoutForURLObserver(appObj)
@@ -365,6 +371,9 @@ function obj:start(appObj)
 end
 
 function obj:stop()
+  if notficationObserver then
+    notficationObserver:stop()
+  end
   _modal:exit()
   if _observer then
     _observer:stop()

@@ -12,7 +12,10 @@ local Spoons = require("hs.spoons")
 local FNUtils = require("hs.fnutils")
 local Window = require("hs.window")
 local Application = require("hs.application")
+local DistributedNotifications = require("hs.distributednotifications")
+
 local spoon = spoon
+
 local obj = {}
 local watcher = nil
 
@@ -35,33 +38,20 @@ local function setInputSourceOnKeyDown()
   end
 
   Keycodes.setLayout(newLayout)
+  DistributedNotifications.post("InputSourceDidChange")
 
   if FNUtils.contains(keyboardLayoutSwitcherExcludedApps, bundleID) then
     return
   end
 
-  if bundleID == "com.apple.Safari" then
-    spoon._Safari:saveLayoutForCurrentURL(newLayout)
-  end
-
   local settingsTable = Settings.get("RBAppsLastActiveKeyboardLayouts") or {}
   settingsTable[bundleID] = {
     ["LastActiveKeyboardLayout"] = newLayout,
-    ["LastActiveKeyboardLayoutTimestamp"] = os.time()
+    ["LastActiveKeyboardLayoutTimestamp"] = os.time(),
   }
   Settings.set("RBAppsLastActiveKeyboardLayouts", settingsTable)
 end
 
---- KeyboardLayoutManager:setInputSource(bundleid)
----
---- Method
----
---- Switch to an app's last used keyboard layout. Typically, called in an app watcher callback for the activated app.
----
---- Parameters:
----
----  * `bundleid` - a string, the bundle identifier of the app.
----
 local function setInputSourceOnAppActivation(bundleid)
   -- default to abc if no saved setting
   local newLayout = "ABC"
@@ -72,13 +62,7 @@ local function setInputSourceOnAppActivation(bundleid)
     -- TODO: reset back to abc based on timestamp?
     newLayout = appSetting["LastActiveKeyboardLayout"]
   end
-  -- ignore for safari
-
-  if bundleid == "com.apple.Safari" then
-    return
-  end
   Keycodes.setLayout(newLayout)
-  return self
 end
 
 --- KeyboardLayoutManager:bindHotkeys(mapping)
@@ -96,7 +80,7 @@ function obj:bindHotKeys(_mapping)
   local def = {
     toggleInputSource = function()
       setInputSourceOnKeyDown()
-    end
+    end,
   }
   Spoons.bindHotkeysToSpec(def, _mapping)
   return self
@@ -108,14 +92,11 @@ function obj:start()
 end
 
 function obj:init()
-  watcher =
-    Application.watcher.new(
-    function(_, event, appObj)
-      if event == Application.watcher.activated then
-        setInputSourceOnAppActivation(appObj:bundleID())
-      end
+  watcher = Application.watcher.new(function(_, event, appObj)
+    if event == Application.watcher.activated then
+      setInputSourceOnAppActivation(appObj:bundleID())
     end
-  )
+  end)
   return self
 end
 
