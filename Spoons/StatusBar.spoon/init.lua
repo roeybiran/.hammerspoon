@@ -1,7 +1,6 @@
 --- === StatusBar ===
 ---
 --- Enables a status menu item with the familiar Hammerspoon logo, but with customizable contents and a flashing mode to signal ongoing operations.
-
 local HSApplication = require("hs.application")
 local HSMenubar = require("hs.menubar")
 local HSTimer = require("hs.timer")
@@ -61,60 +60,57 @@ end
 function obj:start()
   obj.menuTable = {
     {
+      title = "Launch Caffeine",
+      fn = function()
+        spoon.WIP_Caffeine:start()
+      end,
+    },
+    {title = "-"},
+    {
       title = "Watch for config changes",
       fn = function()
         spoon.ConfigWatcher:toggle()
       end,
-      checked = spoon.ConfigWatcher:isActive()
+      checked = spoon.ConfigWatcher:isActive(),
     },
     {
       title = "Watch for appearance changes",
       fn = function()
         spoon.AppearanceWatcher:toggle()
       end,
-      checked = spoon.AppearanceWatcher:isActive()
+      checked = spoon.AppearanceWatcher:isActive(),
     },
     {
       title = "Mute on unknown networks",
       fn = function()
         spoon.WifiWatcher:toggle()
       end,
-      checked = spoon.WifiWatcher:isActive()
+      checked = spoon.WifiWatcher:isActive(),
     },
     {title = "-"},
     {
       title = "Quit Hammerspoon",
       fn = function()
         HSApplication("Hammerspoon"):kill()
-      end
-    }
+      end,
+    },
   }
   menuBarItem = HSMenubar.new():setIcon(regularIconPath):setMenu(obj.menuTable)
-  flashingIconTimer =
-    HSTimer.new(
-    0.2,
-    function()
-      if current == "regular" then
-        menuBarItem:setIcon(regularIconPath)
-        current = "faded"
-      else
-        menuBarItem:setIcon(fadedIconPath)
-        current = "regular"
-      end
+  flashingIconTimer = HSTimer.new(0.2, function()
+    if current == "regular" then
+      menuBarItem:setIcon(regularIconPath)
+      current = "faded"
+    else
+      menuBarItem:setIcon(fadedIconPath)
+      current = "regular"
     end
-  )
-  HSURLEvent.bind(
-    "start-task-with-progress",
-    function()
-      obj:addTask()
-    end
-  )
-  HSURLEvent.bind(
-    "stop-task-with-progress",
-    function()
-      obj:removeTask()
-    end
-  )
+  end)
+  HSURLEvent.bind("start-task-with-progress", function()
+    obj:addTask()
+  end)
+  HSURLEvent.bind("stop-task-with-progress", function()
+    obj:removeTask()
+  end)
   return self
 end
 

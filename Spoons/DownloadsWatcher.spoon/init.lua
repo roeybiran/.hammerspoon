@@ -54,8 +54,7 @@ local function watcherCallback()
   end
 
   for file in iterFn, dirObj do
-    if not Fnutils.contains(filesToIgnore, file) and
-        not file:match("%.download/?$") then
+    if not Fnutils.contains(filesToIgnore, file) and not file:match("%.download/?$") then
       local fullPath = downloadsDir .. "/" .. file
       local inode = FS.attributes(fullPath, "ino")
       if not Fnutils.contains(processedDownloadsInodes, inode) then
@@ -117,8 +116,9 @@ end
 function obj:init()
   throttledTimer = Timer.delayed.new(1, watcherCallback)
   processedDownloadsInodes = Settings.get(processedDownloadsInodesKey) or {}
-  pathWatcher = PathWatcher.new(downloadsDir,
-                                function() throttledTimer:start() end)
+  pathWatcher = PathWatcher.new(downloadsDir, function()
+    throttledTimer:start()
+  end)
   return self
 end
 

@@ -18,6 +18,10 @@ names = {
     "bezeq": "בזק החברה הישראלית לתקשורת",
     "apple music": "Apple Music",
     "apple icloud": "iCloud:",
+    "icount": "אייקאונט מערכות",
+    "google": "Google Workspace",
+    "upress": "upress",
+    "pango": "פנגו",
 }
 
 now = datetime.now()

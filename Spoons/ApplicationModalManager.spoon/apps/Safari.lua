@@ -250,7 +250,6 @@ local function setLayoutForURL(_, _, _, _)
   if urlSetting then
     newLayout = urlSetting
   end
-  print(newLayout)
   KeyCodes.setLayout(newLayout)
 end
 

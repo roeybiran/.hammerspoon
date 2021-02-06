@@ -22,13 +22,11 @@ obj.homepage = "https://github.com/Hammerspoon/Spoons"
 obj.license = "MIT - https://opensource.org/licenses/MIT"
 
 local rules = {}
-local TIMERS_PLIST_PATH = os.getenv("HOME") ..
-                              "/Library/Preferences/com.rb.hs.appquitter.tracker.plist"
+local TIMERS_PLIST_PATH = os.getenv("HOME") .. "/Library/Preferences/com.rb.hs.appquitter.tracker.plist"
 local appWatcher = nil
 
 function obj.log()
-  for line in io.lines(os.getenv("HOME") ..
-                           "/Library/Logs/com.rb.hs.appquitter.errors.log") do
+  for line in io.lines(os.getenv("HOME") .. "/Library/Logs/com.rb.hs.appquitter.errors.log") do
     print(line)
   end
 end
@@ -71,8 +69,7 @@ end
 ---
 function obj:update(event, bundleID)
   -- bail out if app is blacklisted
-  if event == Application.watcher.deactivated or event ==
-      Application.watcher.launched then
+  if event == Application.watcher.deactivated or event == Application.watcher.launched then
     updateIntervalsForBackgroundLaunchedOrDeactivatedApp(bundleID)
   end
   return self
@@ -102,16 +99,13 @@ function obj:start(config)
   appWatcher:start()
   local launchdRunInterval = config.launchdRunInterval
   local launchdLabel = "com.rb.hs.appquitter.daemon"
-  local launchdPlistPath = os.getenv("HOME") .. "/Library/LaunchAgents/" ..
-                               launchdLabel .. ".plist"
+  local launchdPlistPath = os.getenv("HOME") .. "/Library/LaunchAgents/" .. launchdLabel .. ".plist"
   local launchdPlistObject = {
     Label = launchdLabel,
     StartInterval = tonumber(launchdRunInterval),
     ProgramArguments = {"/usr/local/bin/appquitter"},
-    StandardErrorPath = os.getenv("HOME") ..
-        "/Library/Logs/com.rb.hs.appquitter.errors.log",
-    StandardOutPath = os.getenv("HOME") ..
-        "/Library/Logs/com.rb.hs.appquitter.log",
+    StandardErrorPath = os.getenv("HOME") .. "/Library/Logs/com.rb.hs.appquitter.errors.log",
+    StandardOutPath = os.getenv("HOME") .. "/Library/Logs/com.rb.hs.appquitter.log",
   }
 
   local launchdPlistExists = FS.displayName(launchdPlistPath) ~= nil
@@ -122,8 +116,7 @@ function obj:start(config)
     for property, _ in pairs(launchdPlistObject) do
       if launchdPlistObject[property] ~= currentPlist[property] then
         shouldUpdateLaunchdPlist = true
-        os.execute(string.format([[/bin/launchctl unload "%s"]],
-                                 launchdPlistPath))
+        os.execute(string.format([[/bin/launchctl unload "%s"]], launchdPlistPath))
         break
       end
     end
@@ -162,10 +155,7 @@ function obj:start(config)
   local DEFAULT_HIDE_INTERVAL = config.defaultHideInterval
   for key, value in pairs(config.rules) do
     if tonumber(key) then
-      rules[value] = {
-        quit = DEFAULT_QUIT_INTERVAL,
-        hide = DEFAULT_HIDE_INTERVAL,
-      }
+      rules[value] = {quit = DEFAULT_QUIT_INTERVAL, hide = DEFAULT_HIDE_INTERVAL}
     else
       rules[key] = {
         -- convert to seconds

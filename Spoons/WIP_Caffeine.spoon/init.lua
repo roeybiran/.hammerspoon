@@ -12,14 +12,15 @@ end
 local obj = {}
 local DURATIONS = {1, 2, 4, 6, 8, 10}
 local sessionTimeRemaining = 0
-local iconFile = script_path() .. "eye.pdf"
+local onIcon = script_path() .. "on.pdf"
+local offIcon = script_path() .. "off.pdf"
 local menuBarItem = nil
-local allowDisplaySleep = true
-local sleepPreventionTypes = {
-  systemOnly = "systemIdle",
-  systemAndDisplay = "displayIdle",
-}
+
+local sleepPreventionTypes = {systemOnly = "systemIdle", systemAndDisplay = "displayIdle"}
 local menuBarTimer
+
+local sessionIsRunningKey = "rbCaffeineSessionIsRunning"
+local displaySleepAllowedKey = "rbCaffeineDisplaySleepAllowed"
 
 local function getSleepType()
   if allowDisplaySleep then
@@ -28,41 +29,89 @@ local function getSleepType()
   return sleepPreventionTypes.systemAndDisplay
 end
 
+local function isCaffeineSessionRunning()
+  local currentAssertions = caffeine.currentAssertions()
+  for key, _ in pairs(currentAssertions) do
+    for _, v in ipairs(currentAssertions[key]) do
+      if v.AssertName == "hs.caffeinate" then
+        -- print(v)
+        return true
+      end
+    end
+  end
+end
+
 local function beginSession(hours)
-  sessionTimeRemaining = hours * 60 * 60
-  local timerShouldStopAt = Timer.secondsSinceEpoch() + sessionTimeRemaining
-  menuBarTimer = Timer.doEvery(1, function()
-    sessionTimeRemaining = sessionTimeRemaining - 1
-    menuBarItem:setTitle(sessionTimeRemaining)
-  end)
+  if hours then
+    sessionTimeRemaining = hours * 60 * 60
+    local timerShouldStopAt = Timer.secondsSinceEpoch() + sessionTimeRemaining
+    menuBarTimer = Timer.doEvery(1, function()
+      sessionTimeRemaining = sessionTimeRemaining - 1
+      menuBarItem:setTitle(sessionTimeRemaining)
+    end)
+  end
+  menuBarItem:setIcon(onIcon, false)
+  -- local displaySleepAllowed =
   caffeine.set(getSleepType(), true)
-  settings.set("isCaffeineSessionRunning", true)
+  settings.set(sessionIsRunningKey, true)
 end
 
 local function endSession()
-  menuBarTimer:stop()
-  menuBarItem:setTitle("")
-  caffeine.set(getSleepType(), false)
-  settings.set("isCaffeineSessionRunning", false)
+  -- menuBarTimer:stop()
+  -- menuBarItem:setTitle("")
+  for k, _ in pairs(sleepPreventionTypes) do
+    caffeine.set(sleepPreventionTypes[k], false)
+  end
+  settings.set(sessionIsRunningKey, false)
+end
+
+local function opts()
+  local title = "Start"
+  local action = function()
+    beginSession()
+  end
+  if isCaffeineSessionRunning() then
+    title = "Stop"
+    action = function()
+      endSession()
+    end
+  end
+  return {
+    {title = title, fn = action},
+    {
+      title = "Quit",
+      fn = function()
+        obj:stop()
+      end,
+    },
+    {title = "-"},
+    {
+      title = "Allow Display Sleep",
+      checked = settings.get(displaySleepAllowedKey),
+      fn = function()
+        settings.set(displaySleepAllowedKey, (not settings.get(displaySleepAllowedKey)))
+        if isCaffeineSessionRunning() then
+          endSession()
+          beginSession()
+        end
+      end,
+    },
+    {title = "-"},
+    -- durations
+    table.unpack(FN.imap(DURATIONS, function(dur)
+      return {
+        title = string.format("Run for %s hours", dur),
+        fn = function()
+          beginSession(tonumber(dur))
+        end,
+      }
+    end)),
+  }
 end
 
 local function setupMenu()
-  local durations = FN.imap(DURATIONS, function(dur)
-    return {
-      title = string.format("Run for %s hours", dur),
-      fn = function() beginSession(tonumber(dur)) end,
-    }
-  end)
-  local opts = {
-    {title = "Stop", fn = function() endSession() end},
-    {title = "Quit", fn = function() obj:stop() end},
-    {title = "-"},
-    {title = "Allow Display Sleep", checked = true},
-    {title = "-"},
-    table.unpack(durations),
-  }
   if not menuBarItem then
-    menuBarItem = menubar.new():setIcon(iconFile, true):setMenu(opts)
+    menuBarItem = menubar.new():setIcon(offIcon, true):setMenu(opts)
   end
 end
 
@@ -82,7 +131,9 @@ function obj:start()
 end
 
 function obj:init()
-  if settings.get("isCaffeineSessionRunning") then
+  settings.set(displaySleepAllowedKey, settings.get(displaySleepAllowedKey) or true)
+  setupMenu()
+  if settings.get(sessionIsRunningKey) then
     setupMenu()
     obj:start()
   end
