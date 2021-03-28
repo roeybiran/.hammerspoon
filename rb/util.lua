@@ -1,4 +1,3 @@
-local Host = require("hs.host")
 local Plist = require("hs.plist")
 local Geometry = require("hs.geometry")
 local Eventtap = require("hs.eventtap")
@@ -8,7 +7,7 @@ local Mouse = require("hs.mouse")
 
 local obj = {}
 
-local cloudSettingsPlistFile = "settings/cloudSettings.plist"
+local cloudSettingsPlistFile = "CloudSettings/cloudSettings.plist"
 
 function obj.tableCount(t)
   local n = 0
@@ -16,22 +15,6 @@ function obj.tableCount(t)
     n = n + 1
   end
   return n
-end
-
-function obj.labelColor()
-  if Host.interfaceStyle() == "Dark" then
-    return "#FFFFFF"
-  else
-    return "#000000"
-  end
-end
-
-function obj.winBackgroundColor()
-  if Host.interfaceStyle() == "Dark" then
-    return "#262626"
-  else
-    return "#E7E7E7"
-  end
 end
 
 function obj.doubleLeftClick(coords, mods, restoring)

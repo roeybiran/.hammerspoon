@@ -9,7 +9,13 @@ local _appObj = nil
 obj.bundleID = "com.apple.AppStore"
 
 local function goBack(appObj)
-  UI.getUIElement(appObj:mainWindow(), {{"AXGroup", 1}, {"AXButton", "AXTitle", "Go Back"}}):performAction("AXPress")
+  for _, option in ipairs({"AXToolbar", "AXGroup"}) do
+    local element = UI.getUIElement(appObj:mainWindow(), {{option, 1}, {"AXButton", "AXTitle", "Go Back"}})
+    if element then
+      element:performAction("AXPress")
+      return
+    end
+  end
 end
 
 local functions = {

@@ -17,6 +17,9 @@ hs.logger.defaultLogLevel = "error"
 ipc.cliUninstall()
 ipc.cliInstall()
 window.animationDuration = 0
+-- window.highlight.ui.overlayColor = {0, 0, 0, 1}
+-- window.highlight.ui.frameWidth = 10
+window.highlight.ui.overlay = true
 
 ---------
 -- SPOONS
@@ -43,7 +46,6 @@ spoon.AppQuitter:start({
   defaultHideInterval = 1800, -- 30 minutes
 })
 spoon.ApplicationModalManager:start()
-spoon.AppearanceWatcher:start()
 spoon.ConfigWatcher:start()
 spoon.DownloadsWatcher:start()
 spoon.WifiWatcher:start()

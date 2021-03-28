@@ -7,22 +7,6 @@ if [ "$MODE" != light ] && [ "$MODE" != dark ]; then
 	exit 0
 fi
 
-### contexts ###
-if [ "$MODE" = dark ]; then
-	contexts_theme=CTAppearanceNamedVibrantDark
-elif [ "$MODE" = light ]; then
-	contexts_theme=CTAppearanceNamedSubtle
-fi
-
-if [ "$(defaults read com.contextsformac.Contexts CTAppearanceTheme)" != "$contexts_theme" ]; then
-	defaults write com.contextsformac.Contexts CTAppearanceTheme -string "$contexts_theme"
-	killall Contexts
-	sleep 1
-	open -a Contexts
-	sleep 1
-	osascript -e 'tell application "System Events" to click button 1 of window 1 of application process "Contexts"'
-fi
-
 ### launchbar ###
 if [ "$MODE" = dark ]; then
 	launchbar_theme=at.obdev.LaunchBar.theme.Dark

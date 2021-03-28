@@ -46,7 +46,7 @@ case "${path}" in
 	hdiutil detach "${mounted_path}" 1>/dev/null
 	mv -f "${path}" ~/.Trash/
 	;;
-*".heic")
+*".heic" | *".webp")
 	output="$(parsepath "${path}").jpg"
 	sips -s format jpeg "${path}" --out "${output}"
 	mv -f "${path}" ~/.Trash/

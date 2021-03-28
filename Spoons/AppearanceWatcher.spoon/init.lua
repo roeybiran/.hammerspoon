@@ -32,9 +32,6 @@ local function setStyle()
     local msg = string.format("AppearanceWatcher: detected a system style change, from %s to %s", cachedStyle,
                               currentSystemStyle)
     print(msg)
-    if settings.get(appearanceWatcherActiveKey) == false then
-      return
-    end
     settings.set(cachedInterfaceStyleKey, currentSystemStyle)
     task.new(script_path() .. "/appearance.sh", function(exitCode, stdOut, stdErr)
       if exitCode > 0 then
@@ -47,10 +44,14 @@ local function setStyle()
   end
 end
 
-function obj.init()
-  watcher = PathWatcher.new(appearancePlist, function()
-    setStyle()
-  end)
+function obj:init()
+  if settings.get(appearanceWatcherActiveKey) == nil then
+    settings.set(appearanceWatcherActiveKey, true)
+  end
+  if settings.get(appearanceWatcherActiveKey) then
+    obj:start()
+  end
+  return self
 end
 
 --- AppearanceWatcher:stop()
@@ -59,10 +60,10 @@ end
 ---
 --- Stops this module.
 ---
-function obj.stop()
+function obj:stop()
   watcher:stop()
   watcher = nil
-  settings.set(appearanceWatcherActiveKey, false)
+  return self
 end
 
 --- AppearanceWatcher:start()
@@ -71,13 +72,12 @@ end
 ---
 --- starts this module.
 ---
-function obj.start()
-  if not watcher then
-    obj.init()
-  end
-  watcher:start()
+function obj:start()
+  watcher = PathWatcher.new(appearancePlist, function()
+    setStyle()
+  end):start()
   setStyle()
-  settings.set(appearanceWatcherActiveKey, true)
+  return self
 end
 
 --- AppearanceWatcher:toggle()
@@ -86,12 +86,15 @@ end
 ---
 --- Toggles this module.
 ---
-function obj.toggle()
+function obj:toggle()
   if obj:isActive() then
-    obj.stop()
+    settings.set(appearanceWatcherActiveKey, false)
+    obj:stop()
   else
-    obj.start()
+    settings.set(appearanceWatcherActiveKey, true)
+    obj:start()
   end
+  return self
 end
 
 --- AppearanceWatcher:isActive()

@@ -7,7 +7,6 @@ local Hotkey = require("hs.hotkey")
 local Screen = require("hs.screen")
 local Drawing = require("hs.drawing")
 local Webview = require("hs.webview")
-local util = require("rb.util")
 
 local obj = {}
 
@@ -153,8 +152,8 @@ local function createCheatSheet()
     <head>
     <style type="text/css">
       html, body {
-        background-color: %s;
-        color: %s;
+        background-color: black;
+        color: white;
         font-family: -apple-system, sans-serif;
         font-size: 12px;
       }
@@ -181,7 +180,7 @@ local function createCheatSheet()
       <table>%s</table>
     </body>
   </html>
-  ]], util.winBackgroundColor(), util.labelColor(), cheatSheetContents)
+  ]], cheatSheetContents)
   -- window settings
   local screenFrame = Screen.mainScreen():frame()
   local screenCenterX = screenFrame.w / 2

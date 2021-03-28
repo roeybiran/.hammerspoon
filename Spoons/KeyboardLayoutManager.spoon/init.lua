@@ -11,13 +11,10 @@ local Settings = require("hs.settings")
 local Spoons = require("hs.spoons")
 local FNUtils = require("hs.fnutils")
 local Window = require("hs.window")
-local Application = require("hs.application")
 local DistributedNotifications = require("hs.distributednotifications")
-
 local spoon = spoon
 
 local obj = {}
-local watcher = nil
 
 obj.__index = obj
 obj.name = "KeyboardLayoutManager"
@@ -26,6 +23,7 @@ obj.author = "roeybiran <roeybiran@icloud.com>"
 obj.homepage = "https://github.com/Hammerspoon/Spoons"
 obj.license = "MIT - https://opensource.org/licenses/MIT"
 
+local notificationWatcher = nil
 local avoidSwitchingInputSourceOnActivation = {"at.obdev.LaunchBar", "com.contextsformac.Contexts", "com.apple.Safari"}
 
 -- called when the key to toggle the layout is pressed
@@ -86,16 +84,17 @@ function obj:bindHotKeys(_mapping)
 end
 
 function obj:start()
-  watcher:start()
+  notificationWatcher:start()
   return self
 end
 
 function obj:init()
-  watcher = Application.watcher.new(function(_, event, appObj)
-    if event == Application.watcher.activated then
-      setInputSourceOnAppActivation(appObj:bundleID())
+  notificationWatcher = DistributedNotifications.new(function()
+    local newApp = spoon.ApplicationModalManager.currentBundleID
+    if newApp then
+      setInputSourceOnAppActivation(newApp)
     end
-  end)
+  end, "ApplicationActivated")
   return self
 end
 

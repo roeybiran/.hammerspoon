@@ -8,8 +8,9 @@ local FS = require("hs.fs")
 local Application = require("hs.application")
 local Window = require("hs.window")
 local Spoons = require("hs.spoons")
-local obj = {}
+local DistributedNotifications = require("hs.distributednotifications")
 
+local obj = {}
 obj.__index = obj
 obj.name = "ApplicationModalManager"
 obj.version = "1.0"
@@ -21,6 +22,9 @@ local _watcher = nil
 local frontAppBundleID = nil
 local windowFilter = nil
 local appModals = {}
+
+obj.currentBundleID = nil
+obj.currentAppObj = nil
 
 local function updateAppModal(appObj, bundleID)
   for _, module in ipairs(appModals) do
@@ -40,6 +44,9 @@ local function mainCallback(_, event, appObj)
     end
     frontAppBundleID = newBundleID
     updateAppModal(appObj, newBundleID)
+
+    obj.currentBundleID = newBundleID
+    DistributedNotifications.post("ApplicationActivated", nil, {bundle = newBundleID})
   end
 end
 

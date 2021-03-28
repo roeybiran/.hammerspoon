@@ -5,6 +5,7 @@ local HSApplication = require("hs.application")
 local HSMenubar = require("hs.menubar")
 local HSTimer = require("hs.timer")
 local HSURLEvent = require("hs.urlevent")
+local Window = require("hs.window")
 local spoon = spoon
 
 local function script_path()
@@ -29,40 +30,103 @@ local current = "regular"
 local flashingIconTimer
 local taskQueue = 0
 
--- StatusBar.menuTable
--- Variable
--- **TODO**
-obj.menuTable = nil
-
--- StatusBar:addTask()
--- Method
--- **TODO**
-function obj:addTask()
-  if not flashingIconTimer:running() then
-    flashingIconTimer:start()
-  end
-  taskQueue = taskQueue + 1
-  return self
-end
-
--- StatusBar:removeTask()
--- Method
--- **TODO**
-function obj:removeTask()
-  taskQueue = taskQueue - 1
-  if taskQueue < 1 then
-    menuBarItem:setIcon(regularIconPath)
-    flashingIconTimer:stop()
-  end
-  return self
-end
-
-function obj:start()
-  obj.menuTable = {
+local function transmissionMenu()
+  return {
     {
-      title = "Launch Caffeine",
+      title = "Open Transmission Web",
       fn = function()
-        spoon.WIP_Caffeine:start()
+        os.execute([[/usr/bin/open http://localhost:9091/transmission/web/]])
+      end,
+    },
+    {
+      title = "Quit",
+      fn = function()
+        os.execute([[/usr/local/bin/transmission-remote --exit]])
+      end,
+    },
+  }
+end
+
+local function caffeinateMenu()
+
+  local title = "Start"
+  local action = function()
+
+  end
+  -- local action = function()
+  --   beginSession()
+  -- end
+  -- if isCaffeineSessionRunning() then
+  --   title = "Stop"
+  --   action = function()
+  --     endSession()
+  --   end
+  -- end
+
+  local DURATIONS = {10, 8, 6, 4, 2, 1} -- order matters
+
+  local menu = {
+    {
+      title = "Start",
+      fn = function()
+        spoon.WIP_Caffeinate:start()
+      end,
+    },
+    {
+      title = "Stop",
+      fn = function()
+        spoon.WIP_Caffeinate:stop()
+      end,
+    },
+    {title = "-"},
+    {title = "-"},
+    {
+      title = "Allow Display Sleep",
+      -- checked = settings.get(displaySleepAllowedKey),
+      -- fn = function()
+      --   settings.set(displaySleepAllowedKey, (not settings.get(displaySleepAllowedKey)))
+      --   if isCaffeineSessionRunning() then
+      --     endSession()
+      --     beginSession()
+      --   end
+      -- end,
+    },
+    {title = "-"},
+  }
+
+  for _, dur in ipairs(DURATIONS) do
+    table.insert(menu, 3, {
+      title = string.format("Run for %s hours", dur),
+      fn = function()
+        -- beginSession(tonumber(dur))
+      end,
+    })
+  end
+  return menu
+
+end
+
+local function mainMenu()
+  return {
+    {title = "Caffeinate", menu = caffeinateMenu()},
+    {title = "-"},
+    {
+      title = "Launch Transmission Agent",
+      fn = function()
+        spoon.WIP_Transmission:start()
+      end,
+    },
+    {title = "-"},
+    {
+      title = "Turn On Window Highlighting",
+      fn = function()
+        Window.highlight.start()
+      end,
+    },
+    {
+      title = "Turn Off Window Highlighting",
+      fn = function()
+        Window.highlight.stop()
       end,
     },
     {title = "-"},
@@ -95,7 +159,38 @@ function obj:start()
       end,
     },
   }
-  menuBarItem = HSMenubar.new():setIcon(regularIconPath):setMenu(obj.menuTable)
+end
+
+-- StatusBar.menuTable
+-- Variable
+-- **TODO**
+obj.menuTable = nil
+
+-- StatusBar:addTask()
+-- Method
+-- **TODO**
+function obj:addTask()
+  if not flashingIconTimer:running() then
+    flashingIconTimer:start()
+  end
+  taskQueue = taskQueue + 1
+  return self
+end
+
+-- StatusBar:removeTask()
+-- Method
+-- **TODO**
+function obj:removeTask()
+  taskQueue = taskQueue - 1
+  if taskQueue < 1 then
+    menuBarItem:setIcon(regularIconPath)
+    flashingIconTimer:stop()
+  end
+  return self
+end
+
+function obj:start()
+  menuBarItem = HSMenubar.new():setIcon(regularIconPath):setMenu(mainMenu)
   flashingIconTimer = HSTimer.new(0.2, function()
     if current == "regular" then
       menuBarItem:setIcon(regularIconPath)

@@ -22,6 +22,8 @@ names = {
     "google": "Google Workspace",
     "upress": "upress",
     "pango": "פנגו",
+    "meshulam": "משולם",
+    "facebook": "Facebook",
 }
 
 now = datetime.now()

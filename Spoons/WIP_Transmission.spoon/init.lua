@@ -1,5 +1,4 @@
 local MenuBar = require("hs.menubar")
-local Application = require("hs.application")
 local FnUtils = require("hs.fnutils")
 local Task = require("hs.task")
 local Timer = require("hs.timer")
@@ -34,6 +33,7 @@ local function listTorrents()
     local t = FnUtils.split(stdOut, "\n")
     table.remove(t, 1)
     table.remove(t, #t)
+    table.remove(t, #t)
     for _, v in ipairs(t) do
       if string.match(v, " 100%% ") then
         uploads = uploads + 1
@@ -42,15 +42,16 @@ local function listTorrents()
       end
     end
     local title = defaultTitle
-    if downloads > 0 then
-      title = string.format("↓%s", downloads)
+    if downloads > 0 or uploads > 0 then
+      title = ""
+      if downloads > 0 then
+        title = title .. string.format("↓%s", downloads)
+      end
+      if uploads > 0 then
+        title = title .. string.format("↑%s", uploads)
+      end
     end
-    if uploads > 0 then
-      title = string.format("↑%s", uploads)
-    end
-    if title then
-      statusItem:setTitle(title)
-    end
+    statusItem:setTitle(title)
   end, {"-l"})
   task:start()
 end
