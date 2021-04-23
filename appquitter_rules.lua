@@ -89,7 +89,7 @@ return {
   ["at.obdev.LaunchBar.ActionEditor"] = {quit = 0.5, hide = 0.5},
   ["com.apple.iphonesimulator"] = {quit = 1, hide = 0.5},
   ["com.google.Chrome"] = {quit = 4, hide = 1},
-  ["com.kapeli.dashdoc"] = {quit = 6, hide = 1},
+  ["com.kapeli.dashdoc"] = {quit = 8, hide = 1},
   ["com.latenightsw.ScriptDebugger7"] = {quit = 1, hide = 0.5},
   ["com.toggl.toggldesktop.TogglDesktop"] = {quit = 8, hide = 0.5},
   ["fr.handbrake.HandBrake"] = {quit = 10, hide = 0.5},

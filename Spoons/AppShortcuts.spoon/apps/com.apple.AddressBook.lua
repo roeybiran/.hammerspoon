@@ -1,13 +1,9 @@
 local ax = require("hs.axuielement")
 local ui = require("rb.ui")
-local Hotkey = require("hs.hotkey")
-local hs = hs
 
 local obj = {}
-local _modal = nil
+obj.modal = nil
 local _appObj = nil
-
-obj.bundleID = "com.apple.AddressBook"
 
 local function performContactAction(appObj, button)
   local win = ax.windowElement(appObj:focusedWindow())
@@ -35,7 +31,7 @@ function obj:bindModalHotkeys(hotkeysTable)
     if hotkeysTable[k] then
       -- print(hs.inspect(v))
       local mods, key = table.unpack(hotkeysTable[k])
-      _modal:bind(mods, key, v)
+      obj.modal:bind(mods, key, v)
     end
   end
   return self
@@ -43,20 +39,12 @@ end
 
 function obj:start(appObj)
   _appObj = appObj
-  _modal:enter()
+  obj.modal:enter()
   return self
 end
 
 function obj:stop()
-  _modal:exit()
-  return self
-end
-
-function obj:init()
-  if not obj.bundleID then
-    hs.showError("bundle indetifier for app spoon is nil")
-  end
-  _modal = Hotkey.modal.new()
+  obj.modal:exit()
   return self
 end
 

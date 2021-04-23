@@ -9,6 +9,9 @@ local Application = require("hs.application")
 local Window = require("hs.window")
 local Spoons = require("hs.spoons")
 local DistributedNotifications = require("hs.distributednotifications")
+local Hotkey = require("hs.hotkey")
+
+local appScriptsDir = Spoons.resourcePath("apps/")
 
 local obj = {}
 obj.__index = obj
@@ -26,27 +29,29 @@ local appModals = {}
 obj.currentBundleID = nil
 obj.currentAppObj = nil
 
-local function updateAppModal(appObj, bundleID)
-  for _, module in ipairs(appModals) do
-    if module.bundleID == bundleID then
-      module:start(appObj)
+local function enterAppEnvironment(appObj, bundleID)
+  for key, value in pairs(appModals) do
+    if key == bundleID then
+      value:start(appObj)
     else
-      module:stop()
+      value:stop()
     end
   end
 end
 
-local function mainCallback(_, event, appObj)
+local function appWatcherCallback(_, event, appObj)
   local newBundleID = appObj:bundleID()
   if event == Application.watcher.activated or event == "FROM_WINDOW_WATCHER" then
     if newBundleID == frontAppBundleID then
       return
     end
     frontAppBundleID = newBundleID
-    updateAppModal(appObj, newBundleID)
+    enterAppEnvironment(appObj, newBundleID)
 
     obj.currentBundleID = newBundleID
-    DistributedNotifications.post("ApplicationActivated", nil, {bundle = newBundleID})
+    DistributedNotifications.post("ApplicationActivated", nil, {
+      bundle = newBundleID
+    })
   end
 end
 
@@ -61,9 +66,9 @@ local function windowFilterCallback(hsWindow, _, event)
     if bundleID == frontAppBundleID then
       return
     end
-    mainCallback(nil, "FROM_WINDOW_WATCHER", appObj)
+    appWatcherCallback(nil, "FROM_WINDOW_WATCHER", appObj)
   elseif event == "windowDestroyed" then
-    mainCallback(nil, Application.watcher.activated, Application.frontmostApplication())
+    appWatcherCallback(nil, Application.watcher.activated, Application.frontmostApplication())
   end
 end
 
@@ -73,12 +78,20 @@ end
 ---
 --- A table containing apps you consider to be transient and want to be taken into account by the window filter. Elements should have the same structure as the `filters` parameter of hs.window.filter `setFilters` method.
 obj.transientApps = {
-  ["LaunchBar"] = {allowRoles = "AXSystemDialog"},
-  ["1Password 7"] = {allowTitles = "1Password mini"},
-  ["Spotlight"] = {allowRoles = "AXSystemDialog"},
-  ["Paletro"] = {allowRoles = "AXSystemDialog"},
+  ["LaunchBar"] = {
+    allowRoles = "AXSystemDialog"
+  },
+  ["1Password 7"] = {
+    allowTitles = "1Password mini"
+  },
+  ["Spotlight"] = {
+    allowRoles = "AXSystemDialog"
+  },
+  ["Paletro"] = {
+    allowRoles = "AXSystemDialog"
+  },
   ["Contexts"] = false,
-  ["Emoji & Symbols"] = true,
+  ["Emoji & Symbols"] = true
 }
 
 --- AppWatcher.stop()
@@ -100,15 +113,11 @@ end
 --- Starts the module.
 ---
 function obj:start()
-  local allowedWindowFilterEvents = {
-    Window.filter.windowCreated,
-    Window.filter.windowDestroyed,
-    Window.filter.windowFocused,
-  }
+  local allowedWindowFilterEvents = {Window.filter.windowCreated, Window.filter.windowDestroyed, Window.filter.windowFocused}
   -- on reload, enter modal (if any) for the front app (saves an redundant cmd+tab)
   local frontApp = Application.frontmostApplication()
   if frontApp then
-    mainCallback(nil, Application.watcher.activated, frontApp)
+    appWatcherCallback(nil, Application.watcher.activated, frontApp)
   end
   _watcher:start()
   windowFilter:setFilters(obj.transientApps)
@@ -118,18 +127,24 @@ end
 
 function obj:init()
   windowFilter = Window.filter.new(false)
-  _watcher = Application.watcher.new(mainCallback)
-
-  local app_hotkeys = dofile(Spoons.resourcePath("app_hotkeys.lua"))
-  local iterFn, dirObj = FS.dir(Spoons.resourcePath("apps/"))
+  _watcher = Application.watcher.new(appWatcherCallback)
+  local iterFn, dirObj = FS.dir(appScriptsDir)
   if iterFn then
     for file in iterFn, dirObj do
       if string.sub(file, -3) == "lua" then
-        local module = dofile(Spoons.resourcePath("apps/" .. file))
-        local hotkeys_for_app = app_hotkeys[module.bundleID] or {}
-        module:init()
-        module:bindModalHotkeys(hotkeys_for_app)
-        table.insert(appModals, module)
+        local basenameAndBundleID = string.sub(file, 1, -5)
+        local script = dofile(appScriptsDir .. file)
+        if script.actions then
+          script.modal = Hotkey.modal.new()
+          for _, value in pairs(script.actions) do
+            local hotkey = value.hotkey
+            if hotkey then
+              local mods, key = table.unpack(hotkey)
+              script.modal:bind(mods, key, value.action)
+            end
+          end
+          appModals[basenameAndBundleID] = script
+        end
       end
     end
   end

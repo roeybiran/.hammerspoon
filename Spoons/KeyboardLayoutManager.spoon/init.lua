@@ -28,38 +28,38 @@ local avoidSwitchingInputSourceOnActivation = {"at.obdev.LaunchBar", "com.contex
 
 -- called when the key to toggle the layout is pressed
 local function setInputSourceOnKeyDown()
-  local bundleID = Window.frontmostWindow():application():bundleID()
+    local bundleID = Window.frontmostWindow():application():bundleID()
 
-  local newLayout = "ABC"
-  if Keycodes.currentLayout() == "ABC" then
-    newLayout = "Hebrew"
-  end
+    local newLayout = "ABC"
+    if Keycodes.currentLayout() == "ABC" then
+        newLayout = "Hebrew"
+    end
 
-  Keycodes.setLayout(newLayout)
-  DistributedNotifications.post("InputSourceDidChange")
+    Keycodes.setLayout(newLayout)
+    DistributedNotifications.post("InputSourceDidChange")
 
-  local settingsTable = Settings.get("RBAppsLastActiveKeyboardLayouts") or {}
-  settingsTable[bundleID] = {
-    ["LastActiveKeyboardLayout"] = newLayout,
-    ["LastActiveKeyboardLayoutTimestamp"] = os.time(),
-  }
-  Settings.set("RBAppsLastActiveKeyboardLayouts", settingsTable)
+    local settingsTable = Settings.get("RBAppsLastActiveKeyboardLayouts") or {}
+    settingsTable[bundleID] = {
+        ["LastActiveKeyboardLayout"] = newLayout,
+        ["LastActiveKeyboardLayoutTimestamp"] = os.time()
+    }
+    Settings.set("RBAppsLastActiveKeyboardLayouts", settingsTable)
 end
 
 local function setInputSourceOnAppActivation(bundleID)
-  if FNUtils.contains(avoidSwitchingInputSourceOnActivation, bundleID) then
-    return
-  end
-  -- default to abc if no saved setting
-  local newLayout = "ABC"
-  -- special handling for safari
-  local settingsTable = Settings.get("RBAppsLastActiveKeyboardLayouts") or {}
-  local oldSetting = settingsTable[bundleID]
-  if oldSetting then
-    -- TODO: reset back to abc based on timestamp?
-    newLayout = oldSetting["LastActiveKeyboardLayout"]
-  end
-  Keycodes.setLayout(newLayout)
+    if FNUtils.contains(avoidSwitchingInputSourceOnActivation, bundleID) then
+        return
+    end
+    -- default to abc if no saved setting
+    local newLayout = "ABC"
+    -- special handling for safari
+    local settingsTable = Settings.get("RBAppsLastActiveKeyboardLayouts") or {}
+    local oldSetting = settingsTable[bundleID]
+    if oldSetting then
+        -- TODO: reset back to abc based on timestamp?
+        newLayout = oldSetting["LastActiveKeyboardLayout"]
+    end
+    Keycodes.setLayout(newLayout)
 end
 
 --- KeyboardLayoutManager:bindHotkeys(mapping)
@@ -74,28 +74,28 @@ end
 ---   * `toggleInputSource` - switch between the "Hebrew" and "ABC" layouts.
 ---
 function obj:bindHotKeys(_mapping)
-  local def = {
-    toggleInputSource = function()
-      setInputSourceOnKeyDown()
-    end,
-  }
-  Spoons.bindHotkeysToSpec(def, _mapping)
-  return self
+    local def = {
+        toggleInputSource = function()
+            setInputSourceOnKeyDown()
+        end
+    }
+    Spoons.bindHotkeysToSpec(def, _mapping)
+    return self
 end
 
 function obj:start()
-  notificationWatcher:start()
-  return self
+    notificationWatcher:start()
+    return self
 end
 
 function obj:init()
-  notificationWatcher = DistributedNotifications.new(function()
-    local newApp = spoon.ApplicationModalManager.currentBundleID
-    if newApp then
-      setInputSourceOnAppActivation(newApp)
-    end
-  end, "ApplicationActivated")
-  return self
+    notificationWatcher = DistributedNotifications.new(function()
+        local newApp = spoon.AppShortcuts.currentBundleID
+        if newApp then
+            setInputSourceOnAppActivation(newApp)
+        end
+    end, "ApplicationActivated")
+    return self
 end
 
 return obj

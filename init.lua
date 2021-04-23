@@ -45,17 +45,16 @@ spoon.AppQuitter:start({
   defaultQuitInterval = 14400, -- 4 hours
   defaultHideInterval = 1800, -- 30 minutes
 })
-spoon.ApplicationModalManager:start()
+spoon.AppShortcuts:start()
 spoon.ConfigWatcher:start()
 spoon.DownloadsWatcher:start()
 spoon.WifiWatcher:start()
 spoon.StatusBar:start()
-spoon.WIP_Transmission:start()
 
 -- HOTKEYS ---
 local hotkeys = require("global_hotkeys")
 -- global
 spoon.KeyboardLayoutManager:bindHotKeys(hotkeys.keyboardLayoutManager):start()
-spoon.Globals:bindHotKeys(hotkeys.globals)
+spoon.GlobalShortcuts:bindHotKeys(hotkeys.globals)
 spoon.WindowManager:bindHotKeys(hotkeys.windowManager)
 spoon.NotificationCenter:bindHotKeys(hotkeys.notificationCenter)

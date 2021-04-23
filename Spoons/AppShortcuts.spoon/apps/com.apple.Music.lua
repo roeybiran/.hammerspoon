@@ -1,12 +1,9 @@
 local ui = require("rb.ui")
-local Hotkey = require("hs.hotkey")
-local hs = hs
 
 local obj = {}
-local _modal = nil
+obj.modal = nil
 local _appObj = nil
 
-obj.bundleID = "com.apple.Music"
 
 local function pane1(appObj)
   local _pane1 = {{"AXWindow", 1}, {"AXSplitGroup", 1}, {"AXScrollArea", 1}, {"AXOutline", 1}}
@@ -45,7 +42,7 @@ function obj:bindModalHotkeys(hotkeysTable)
     if hotkeysTable[k] then
       -- print(hs.inspect(v))
       local mods, key = table.unpack(hotkeysTable[k])
-      _modal:bind(mods, key, v)
+      obj.modal:bind(mods, key, v)
     end
   end
   return self
@@ -53,20 +50,12 @@ end
 
 function obj:start(appObj)
   _appObj = appObj
-  _modal:enter()
+  obj.modal:enter()
   return self
 end
 
 function obj:stop()
-  _modal:exit()
-  return self
-end
-
-function obj:init()
-  if not obj.bundleID then
-    hs.showError("bundle indetifier for app spoon is nil")
-  end
-  _modal = Hotkey.modal.new()
+  obj.modal:exit()
   return self
 end
 

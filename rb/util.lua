@@ -1,4 +1,3 @@
-local Plist = require("hs.plist")
 local Geometry = require("hs.geometry")
 local Eventtap = require("hs.eventtap")
 local Timer = require("hs.timer")
@@ -6,8 +5,6 @@ local Window = require("hs.window")
 local Mouse = require("hs.mouse")
 
 local obj = {}
-
-local cloudSettingsPlistFile = "CloudSettings/cloudSettings.plist"
 
 function obj.tableCount(t)
   local n = 0
@@ -57,17 +54,5 @@ function obj.strictShortcut(keyBinding, app, modal, conditionalFunction, success
     modal:enter()
   end
 end
-
-obj.cloudSettings = {
-  get = function(key)
-    local rootObject = Plist.read(cloudSettingsPlistFile)
-    return rootObject[key]
-  end,
-  set = function(key, value)
-    local rootObject = Plist.read(cloudSettingsPlistFile)
-    rootObject[key] = value
-    Plist.write(cloudSettingsPlistFile, rootObject)
-  end,
-}
 
 return obj

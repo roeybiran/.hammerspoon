@@ -81,7 +81,7 @@ local function watcherCallback()
         print("DownloadsWatcher shell script stderr: ", stderr)
       end
       if string.match(stdout, "%s+") then
-        print("DownloadWatcher shell script stdour: ", stdout)
+        print("DownloadWatcher shell script stdout: ", stdout)
       end
       if string.match(stdout, "/Downloads/") then
         Pasteboard.setContents(stdout)

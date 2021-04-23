@@ -21,13 +21,12 @@ local function focusMenuBar()
 end
 
 local function rightClick()
-    ax.applicationElement(application.frontmostApplication()):attributeValue("AXFocusedUIElement")
-        :performAction("AXShowMenu")
+    ax.applicationElement(application.frontmostApplication()):attributeValue("AXFocusedUIElement"):performAction(
+        "AXShowMenu")
 end
 
 local function focusDock()
-    UI.getUIElement(application("Dock"), {{"AXList", 1}}):setAttributeValue(
-        "AXFocused", true)
+    UI.getUIElement(application("Dock"), {{"AXList", 1}}):setAttributeValue("AXFocused", true)
 end
 
 --- Globals:bindHotKeys(_mapping)
@@ -45,33 +44,18 @@ end
 ---
 function obj:bindHotKeys(_mapping)
     local def = {
-        rightClick = function() rightClick() end,
-        focusMenuBar = function() focusMenuBar() end,
-        focusDock = function() focusDock() end
+        rightClick = function()
+            rightClick()
+        end,
+        focusMenuBar = function()
+            focusMenuBar()
+        end,
+        focusDock = function()
+            focusDock()
+        end
     }
     hs.spoons.bindHotkeysToSpec(def, _mapping)
     return self
 end
 
 return obj
-
--- local function lookUpInDictionary()
---   eventtap.keyStroke({"cmd"}, "c")
---   Timer.doAfter(
---     0.4,
---     function()
---       local arg = "dict://" .. pasteboard.getContents()
---       Task.new("/usr/bin/open", nil, {arg}):start()
---     end
---   )
--- end
-
--- local function showHelpMenu()
---   Keycodes.setLayout("ABC")
---   local menuBar = ax.systemElementAtPosition({0, 0}):attributeValue("AXParent")
---   for _, v in ipairs(menuBar) do
---     if v:attributeValue("AXTitle") == "Help" then
---       return v:performAction("AXPress")
---     end
---   end
--- end

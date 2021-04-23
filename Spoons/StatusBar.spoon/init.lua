@@ -30,29 +30,12 @@ local current = "regular"
 local flashingIconTimer
 local taskQueue = 0
 
-local function transmissionMenu()
-  return {
-    {
-      title = "Open Transmission Web",
-      fn = function()
-        os.execute([[/usr/bin/open http://localhost:9091/transmission/web/]])
-      end,
-    },
-    {
-      title = "Quit",
-      fn = function()
-        os.execute([[/usr/local/bin/transmission-remote --exit]])
-      end,
-    },
-  }
-end
-
 local function caffeinateMenu()
 
   local title = "Start"
   local action = function()
-
   end
+
   -- local action = function()
   --   beginSession()
   -- end
@@ -109,13 +92,6 @@ end
 local function mainMenu()
   return {
     {title = "Caffeinate", menu = caffeinateMenu()},
-    {title = "-"},
-    {
-      title = "Launch Transmission Agent",
-      fn = function()
-        spoon.WIP_Transmission:start()
-      end,
-    },
     {title = "-"},
     {
       title = "Turn On Window Highlighting",

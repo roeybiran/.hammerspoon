@@ -2,7 +2,6 @@ local EventTap = require("hs.eventtap")
 local AppleScript = require("hs.osascript").applescript
 local KeyCodes = require("hs.keycodes")
 local Timer = require("hs.timer")
-local Hotkey = require("hs.hotkey")
 local FnUtils = require("hs.fnutils")
 local Settings = require("hs.settings")
 local UI = require("rb.ui")
@@ -18,13 +17,12 @@ local function script_path()
 end
 
 local obj = {}
-local _modal = nil
+obj.modal = nil
 local _appObj = nil
 local _observer = nil
 local layoutsPerURLKey = "RBSafariLayoutsForURL"
 local notficationObserver = nil
 
-obj.bundleID = "com.apple.Safari"
 
 local function moveFocusToSafariMainArea(appObj, includeSidebar)
   -- ui scripting notes:
@@ -35,7 +33,7 @@ local function moveFocusToSafariMainArea(appObj, includeSidebar)
     {"AXSplitGroup", 1},
     {"AXGroup", 1},
     {"AXScrollArea", 1},
-    {"AXOutline", 1},
+    {"AXOutline", 1}
   }
   local bookmarksAndHistoryView = {
     {"AXWindow", "AXRoleDescription", "standard window"},
@@ -43,7 +41,7 @@ local function moveFocusToSafariMainArea(appObj, includeSidebar)
     {"AXTabGroup", 1},
     {"AXGroup", 1},
     {"AXScrollArea", 1},
-    {"AXOutline", 1},
+    {"AXOutline", 1}
   }
   local standardWebpageView = {
     {"AXWindow", "AXRoleDescription", "standard window"},
@@ -52,7 +50,7 @@ local function moveFocusToSafariMainArea(appObj, includeSidebar)
     {"AXGroup", 1},
     {"AXGroup", 1},
     {"AXScrollArea", 1},
-    {"AXWebArea", 1},
+    {"AXWebArea", 1}
   }
   local targetPane
   local sideBar
@@ -73,8 +71,10 @@ end
 
 local function isSafariAddressBarFocused(appObj)
   local axAppObj = AX.applicationElement(appObj)
-  local addressBarObject = UI.getUIElement(axAppObj, {{"AXWindow", "AXMain", true}, {"AXToolbar", 1}}):attributeValue(
-                               "AXChildren")
+  local addressBarObject = UI.getUIElement(axAppObj, {
+    {"AXWindow", "AXMain", true},
+    {"AXToolbar", 1}
+  }):attributeValue("AXChildren")
   for _, toolbarObject in ipairs(addressBarObject) do
     local toolbarObjectsChilds = toolbarObject:attributeValue("AXChildren")
     if toolbarObjectsChilds then
@@ -105,12 +105,11 @@ local function moveFocusToMainAreaAndChangeToABCAfterOpeningLocation(appObj, mod
   if not isFocused then
     return
   end
-  -- KeyCodes.setLayout("ABC")
   local UIElementHomeScreenView = {
     {"AXWindow", "AXRoleDescription", "standard window"},
     {"AXSplitGroup", 1},
     {"AXTabGroup", 1},
-    {"AXScrollArea", 1},
+    {"AXScrollArea", 1}
   }
   -- in my experience, the address bar remains focused only after searching in Google
   -- so, wait an initial interval before entering loop
@@ -133,29 +132,34 @@ local function moveFocusToMainAreaAndChangeToABCAfterOpeningLocation(appObj, mod
 end
 
 local function pageNavigation(direction)
-  local jsFile = script_path() .. "/navigatePages.js"
+  local jsFile = script_path() .. "/helpers/navigatePages.js"
   local script = [[
   set _arg to "%s"
   set theFile to (POSIX file "%s" as alias)
   set theScript to read theFile as string
   set theScript to "var direction = '" & _arg & "'; " & theScript
   tell application "Safari"
-  tell (window 1 whose visible of it = true)
-  tell (tab 1 whose visible of it = true)
-  return do JavaScript theScript
+    tell (window 1 whose visible of it = true)
+      tell (tab 1 whose visible of it = true)
+        return do JavaScript theScript
+      end tell
+    end tell
   end tell
-end tell
-end tell
 ]]
-  script = string.format(script, direction, jsFile)
-  AppleScript(script)
+script = string.format(script, direction, jsFile)
+AppleScript(script)
 end
 
 local function newBookmarksFolder(appObj)
   local title = appObj:focusedWindow():title()
   if string.match(title, "Bookmarks") then
-    UI.getUIElement(appObj, {{"AXWindow", 1}, {"AXSplitGroup", 1}, {"AXTabGroup", 1}, {"AXGroup", 1}, {"AXButton", 1}}):performAction(
-        "AXPress")
+    UI.getUIElement(appObj, {
+      {"AXWindow", 1},
+      {"AXSplitGroup", 1},
+      {"AXTabGroup", 1},
+      {"AXGroup", 1},
+      {"AXButton", 1}
+    }):performAction("AXPress")
   else
     appObj:selectMenuItem({"File", "New Private Window"})
   end
@@ -170,7 +174,7 @@ local function rightSizeBookmarksOrHistoryColumn(appObj)
     {"AXScrollArea", 1},
     {"AXOutline", 1},
     {"AXGroup", 1},
-    {"AXButton", "AXTitle", "Website"},
+    {"AXButton", "AXTitle", "Website"}
   }):attributeValue("AXFrame")
   local x = firstColumn.x + firstColumn.w
   local y = firstColumn.y + 5
@@ -202,45 +206,53 @@ local function moveTab(direction)
   end
   local script = [[
   tell application "Safari"
-  tell window 1
-  set sourceIndex to index of current tab
-  set targetIndex to (sourceIndex %s 1)
-  if not (exists tab targetIndex) then
-    set targetIndex to %s
-    move tab sourceIndex to %s tab targetIndex
-  end if
-  move tab sourceIndex to %s tab targetIndex
-  set current tab to tab targetIndex
-end tell
-end tell
+    tell window 1
+      set sourceIndex to index of current tab
+      set targetIndex to (sourceIndex %s 1)
+      if not (exists tab targetIndex) then
+        set targetIndex to %s
+        move tab sourceIndex to %s tab targetIndex
+      end if
+      move tab sourceIndex to %s tab targetIndex
+      set current tab to tab targetIndex
+    end tell
+  end tell
 ]]
-  script = string.format(script, table.unpack(args))
-  AppleScript(script)
+script = string.format(script, table.unpack(args))
+AppleScript(script)
 end
 
 local function getCurrentURL()
   -- AppleScript method
   local _, currentURL, _ = AppleScript [[
   tell application "Safari"
-    tell window 1
-      return URL of current tab
-    end tell
-  end tell]]
-  if not currentURL then
-    return
-  end
-  currentURL = currentURL:gsub("^.+://", "")
-  local lastSlash = currentURL:find("/")
-  if lastSlash then
-    currentURL = currentURL:sub(1, lastSlash - 1)
-  end
-  return currentURL
+  tell window 1
+  return URL of current tab
+end tell
+end tell]]
+if not currentURL then
+  return
+end
+currentURL = currentURL:gsub("^.+://", "")
+local lastSlash = currentURL:find("/")
+if lastSlash then
+  currentURL = currentURL:sub(1, lastSlash - 1)
+end
+return currentURL
 end
 
-local function setLayoutForURL(_, _, _, _)
+local function onReceiveInputSourceChangeNotification()
+  local currentLayout = KeyCodes.currentLayout()
+  local settingsTable = Settings.get(layoutsPerURLKey) or {}
+  local currentURL = getCurrentURL()
+  settingsTable[currentURL] = currentLayout
+  Settings.set(layoutsPerURLKey, settingsTable)
+end
+
+local function onTitleChangeObserverCallback(_, _, _, _)
   local url = getCurrentURL()
   local special = {"bookmarks://", "history://", "favorites://"}
-  if not url or url == "" or FnUtils.contains(special, url) then
+  if FnUtils.contains(special, url) or url == "" or not url then
     KeyCodes.setLayout("ABC")
     return
   end
@@ -253,119 +265,116 @@ local function setLayoutForURL(_, _, _, _)
   KeyCodes.setLayout(newLayout)
 end
 
-local function saveLayoutForCurrentURL()
-  local currentLayout = KeyCodes.currentLayout()
-  local settingsTable = Settings.get(layoutsPerURLKey) or {}
-  local currentURL = getCurrentURL()
-  settingsTable[currentURL] = currentLayout
-  Settings.set(layoutsPerURLKey, settingsTable)
-end
-
-local function addKeyboardLayoutForURLObserver(appObj)
+local function setupTitleChangeObserver(appObj)
   local pid = appObj:pid()
   _observer = Observer.new(pid)
   local element = AX.applicationElement(appObj)
   -- if Safari has just been launched, this may return "*accessibility error* (0x60000104cbf8)"
   -- this value is not nil so we need to check by casting
   if not element:asHSApplication() then
-    Timer.doAfter(1, function()
+    Timer.doAfter(0.5, function()
       if not element then
         hs.showError("AXUIElement still unavailable after delay. Consider increasing the delay's value")
       end
-      addKeyboardLayoutForURLObserver(_appObj)
+      setupTitleChangeObserver(_appObj)
     end)
     return
   end
   _observer:addWatcher(element, "AXTitleChanged")
-  _observer:callback(setLayoutForURL)
+  _observer:callback(onTitleChangeObserverCallback)
   _observer:start()
 end
 
-local functions = {
-  moveTabLeft = function()
-    moveTab("left")
-  end,
-  moveTabRight = function()
-    moveTab("right")
-  end,
-  newWindow = function()
-    _appObj:selectMenuItem({"File", "New Window"})
-  end,
-  goToNextPage = function()
-    pageNavigation("next")
-  end,
-  goToPreviousPage = function()
-    pageNavigation("previous")
-  end,
-  moveFocusToMainAreaAndChangeToABCAfterOpeningLocation = function()
-    moveFocusToMainAreaAndChangeToABCAfterOpeningLocation(_appObj, _modal, {{}, "return"})
-  end,
-  changeToABCAfterFocusingAddressBar = function()
-    changeToABCAfterFocusingAddressBar(_modal, {{"cmd"}, "l"})
-  end,
-  focusSidebar = function()
-    moveFocusToSafariMainArea(_appObj, true)
-  end,
-  focusMainArea = function()
-    moveFocusToSafariMainArea(_appObj, false)
-  end,
-  newBookmarksFolder = function()
-    newBookmarksFolder(_appObj)
-  end,
-  rightSizeBookmarksOrHistoryColumn = function()
-    rightSizeBookmarksOrHistoryColumn(_appObj)
-  end,
-  firstSearchResult = function()
-    firstSearchResult(_appObj, _modal)
-  end,
+obj.actions = {
+  --- moveTabLeft - moves the focused tab one position to the left.
+  moveTabLeft = {
+    action = function()
+      moveTab("left")
+    end,
+    hotkey = {"ctrl", ","}
+  },
+  --- moveTabRight - moves the focused tab one position to the right.
+  moveTabRight = {
+    action = function()
+      moveTab("right")
+    end,
+    hotkey = {"ctrl", "."}
+  },
+  --- newWindow - ensures a new window will be opened rather than a tab. Useful when the "Prefer tabs" setting in the Dock Preference Pane is set to "always".
+  newWindow = {
+    action = function()
+      _appObj:selectMenuItem({"File", "New Window"})
+    end,
+    hotkey = {"cmd", "n"}
+  },
+  --- goToNextPage - navigates to a web page's next page, if applicable.
+  goToNextPage = {
+    action = function()
+      pageNavigation("next")
+    end,
+    hotkey = {"ctrl", "n"}
+  },
+  --- goToPreviousPage - navigates to a web page's previous page, if applicable.
+  goToPreviousPage = {
+    action = function()
+      pageNavigation("previous")
+    end,
+    hotkey = {"ctrl", "p"}
+  },
+  --- moveFocusToMainAreaAndChangeToABCAfterOpeningLocation - unfocuses the address bar (if focused) after loading a web page. Useful when using Vimari's hints feature, which doesn't work with the address bar focused.
+  moveFocusToMainAreaAndChangeToABCAfterOpeningLocation = {
+    action = function()
+      moveFocusToMainAreaAndChangeToABCAfterOpeningLocation(_appObj, obj.modal, {{}, "return"})
+    end,
+    hotkey = {{}, "return"}
+  },
+  --- changeToABCAfterFocusingAddressBar - changes the active keyboard layout to ABC once the address bar has gained focus.
+  changeToABCAfterFocusingAddressBar = {
+    action = function()
+      changeToABCAfterFocusingAddressBar(obj.modal, {{"cmd"}, "l"})
+    end,
+    hotkey = {"cmd", "l"}
+  },
+  --- TODO
+  changeToABCAfterOpeningNewTab = {
+    action = function()
+      changeToABCAfterFocusingAddressBar(obj.modal, {{"cmd"}, "t"})
+    end,
+    hotkey = {"cmd", "t"}
+  },
+  --- newBookmarksFolder - creates a new bookmarks folder. Works only while viewing bookmarks.
+  newBookmarksFolder = {
+    action = function()
+      newBookmarksFolder(_appObj)
+    end,
+    hotkey = {{"cmd", "shift"}, "n"}
+  },
+  --- rightSizeBookmarksOrHistoryColumn - sizes to fit the first column of the bookmarks/history view.
+  rightSizeBookmarksOrHistoryColumn = {
+    action = function()
+      rightSizeBookmarksOrHistoryColumn(_appObj)
+    end,
+    hotkey = {"alt", "r"}
+  },
+  --- firstSearchResult - in a history/bookmarks view and when the search field is focused, moves focus the 1st search result.
+  firstSearchResult = {
+    action = function()
+      firstSearchResult(_appObj, obj.modal)
+    end,
+    hotkey = {{}, "tab"}
+  }
 }
-
---- _Safari:bindModalHotkeys(hotkeysTable)
----
---- Method
----
---- Parameters:
----
---- * `hotkeysTable` - A table of key value pairs. The hotkeys to be toggled when the target app activates.
----   * Each value is a table (as per the `hs.hotkey.bind` constructor) defining the hotkey of choice.
----   * Each key is the name of the function to be executed by the hotkey.
----   * No hotkeys are bound by default. Leave as is to disable.
----
---- This module offers the following functionalities:
----
---- * `moveTabLeft` - moves the focused tab one position to the left.
---- * `moveTabRight` - moves the focused tab one position to the right.
---- * `newWindow` - ensures a new window will be opened rather than a tab. Useful when the "Prefer tabs" setting in the Dock Preference Pane is set to "always".
---- * `goToNextPage` - navigates to a web page's next page, if applicable.
---- * `goToPreviousPage` - navigates to a web page's previous page, if applicable.
---- * `moveFocusToMainAreaAndChangeToABCAfterOpeningLocation` - unfocuses the address bar (if focused) after loading a web page. Useful when using Vimari's hints feature, which doesn't work with the address bar focused.
---- * `changeToABCAfterFocusingAddressBar` - changes the active keyboard layout to ABC once the address bar has gained focus.
---- * `focusSidebar` - focuses the side bar.
---- * `focusMainArea` - focuses the main area, that is, the web page.
---- * `newBookmarksFolder` - creates a new bookmarks folder. Works only while viewing bookmarks.
---- * `rightSizeBookmarksOrHistoryColumn` - sizes to fit the first column of the bookmarks/history view.
---- * `firstSearchResult` - in a history/bookmarks view and when the search field is focused, moves focus the 1st search result.
----
-function obj:bindModalHotkeys(hotkeysTable)
-  for k, v in pairs(functions) do
-    if hotkeysTable[k] then
-      -- print(hs.inspect(v))
-      local mods, key = table.unpack(hotkeysTable[k])
-      _modal:bind(mods, key, v)
-    end
-  end
-  return self
-end
 
 function obj:start(appObj)
   if not notficationObserver then
-    notficationObserver = DistributedNotifications.new(saveLayoutForCurrentURL, "InputSourceDidChange")
+    notficationObserver = DistributedNotifications.new(onReceiveInputSourceChangeNotification,
+    "InputSourceDidChange")
   end
   notficationObserver:start()
   _appObj = appObj
-  _modal:enter()
-  addKeyboardLayoutForURLObserver(appObj)
-  setLayoutForURL()
+  obj.modal:enter()
+  setupTitleChangeObserver(appObj)
+  onTitleChangeObserverCallback()
   return self
 end
 
@@ -373,19 +382,11 @@ function obj:stop()
   if notficationObserver then
     notficationObserver:stop()
   end
-  _modal:exit()
+  obj.modal:exit()
   if _observer then
     _observer:stop()
     _observer = nil
   end
-  return self
-end
-
-function obj:init()
-  if not obj.bundleID then
-    hs.showError("bundle indetifier for app spoon is nil")
-  end
-  _modal = Hotkey.modal.new()
   return self
 end
 

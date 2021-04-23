@@ -3,14 +3,11 @@ local eventtap = require("hs.eventtap")
 local keycodes = require("hs.keycodes")
 local timer = require("hs.timer")
 local Keycodes = require("hs.keycodes")
-local Hotkey = require("hs.hotkey")
-local hs = hs
 
 local obj = {}
-local _modal = nil
-local _appObj = nil
+obj.modal = nil
 
-obj.bundleID = "desktop.WhatsApp"
+local _appObj = nil
 
 local function switchToABCOnSearch(appObj)
   Keycodes.setLayout("ABC")
@@ -56,7 +53,7 @@ function obj:bindModalHotkeys(hotkeysTable)
     if hotkeysTable[k] then
       -- print(hs.inspect(v))
       local mods, key = table.unpack(hotkeysTable[k])
-      _modal:bind(mods, key, v)
+      obj.modal:bind(mods, key, v)
     end
   end
   return self
@@ -64,20 +61,12 @@ end
 
 function obj:start(appObj)
   _appObj = appObj
-  _modal:enter()
+  obj.modal:enter()
   return self
 end
 
 function obj:stop()
-  _modal:exit()
-  return self
-end
-
-function obj:init()
-  if not obj.bundleID then
-    hs.showError("bundle indetifier for app spoon is nil")
-  end
-  _modal = Hotkey.modal.new()
+  obj.modal:exit()
   return self
 end
 
