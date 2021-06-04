@@ -2,6 +2,7 @@ local Console = require("hs.console")
 local hs = hs
 
 local obj = {}
+
 obj.modal = nil
 
 obj.actions = {

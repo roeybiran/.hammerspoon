@@ -3,8 +3,6 @@ local Util = require("rb.util")
 local fuzzyChooser = require("rb.fuzzychooser")
 
 local obj = {}
-
-obj.modal = nil
 local _appObj = nil
 
 local function chooserCallback(choice)
@@ -27,6 +25,8 @@ local function getChatMessageLinks(appObj)
   end
   fuzzyChooser:start(chooserCallback, choices, {"text"})
 end
+
+obj.modal = nil
 
 obj.actions = {
   getMessageLinks = {

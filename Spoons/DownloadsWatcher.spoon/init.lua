@@ -38,10 +38,50 @@ local processedDownloadsInodesKey = "RBDownloadsWatcherProcessedDownloadsInodes"
 local home = os.getenv("HOME")
 local downloadsDir = home .. "/Downloads"
 local shellScript = script_path() .. "/process_path.sh"
-local filesToIgnore = {".DS_Store", ".localized", ".", ".."}
+-- local supportedFormats = {"pdf", "zip", "tgz", "gz", "dmg", "heic", "webp"}
+local filesToIgnore = {
+  { pattern = ".DS_Store", isRegex =  false },
+  { pattern = ".localized", isRegex = false },
+  { pattern = ".", isRegex = false },
+  { pattern = "..", isRegex = false },
+  { pattern = "^.*%.crdownload$", isRegex = true },
+  { pattern = "^.*%.download$", isRegex = true },
+}
 local processedDownloadsInodes
 local pathWatcher
 local throttledTimer
+
+local function shellCallback(_, stdout, stderr)
+  if string.match(stderr, "%s+") then
+    print("DownloadsWatcher shell script stderr: ", stderr)
+  end
+  if string.match(stdout, "%s+") then
+    print("DownloadWatcher shell script stdout: ", stdout)
+  end
+  if string.match(stdout, "/Downloads/") then
+    -- Pasteboard.setContents(stdout)
+  end
+  spoon.StatusBar:removeTask()
+end
+
+local function shouldProcessFile(settings,  fileName)
+  local shouldProcess = true
+    for _, setting in ipairs(settings) do
+      if setting.isRegex then
+        if string.find(fileName, setting.pattern) then
+          print("match", fileName, setting)
+          shouldProcess = false
+          break
+        end
+      else
+        if fileName == setting.pattern then
+          shouldProcess = false
+          break
+        end
+      end
+    end
+    return  shouldProcess
+end
 
 local function watcherCallback()
   local iteratedFiles = {}
@@ -54,7 +94,7 @@ local function watcherCallback()
   end
 
   for file in iterFn, dirObj do
-    if not Fnutils.contains(filesToIgnore, file) and not file:match("%.download/?$") then
+    if shouldProcessFile(filesToIgnore, file) then
       local fullPath = downloadsDir .. "/" .. file
       local inode = FS.attributes(fullPath, "ino")
       if not Fnutils.contains(processedDownloadsInodes, inode) then
@@ -76,18 +116,7 @@ local function watcherCallback()
   -- process the files
   for _, path in ipairs(pathsToProcess) do
     spoon.StatusBar:addTask()
-    Task.new(shellScript, function(_, stdout, stderr)
-      if string.match(stderr, "%s+") then
-        print("DownloadsWatcher shell script stderr: ", stderr)
-      end
-      if string.match(stdout, "%s+") then
-        print("DownloadWatcher shell script stdout: ", stdout)
-      end
-      if string.match(stdout, "/Downloads/") then
-        Pasteboard.setContents(stdout)
-      end
-      spoon.StatusBar:removeTask()
-    end, {path}):start()
+    Task.new(shellScript, shellCallback, {path}):start()
   end
 end
 

@@ -1,18 +1,11 @@
 local geometry = require("hs.geometry")
 local eventtap = require("hs.eventtap")
-local keycodes = require("hs.keycodes")
+local KeyCodes = require("hs.keycodes")
 local timer = require("hs.timer")
-local Keycodes = require("hs.keycodes")
+local util = require("rb.util")
 
 local obj = {}
-obj.modal = nil
-
 local _appObj = nil
-
-local function switchToABCOnSearch(appObj)
-  Keycodes.setLayout("ABC")
-  appObj:selectMenuItem({"Edit", "Search"})
-end
 
 local function whatsAppMouseScripts(appObj, requestedAction)
   local x
@@ -30,7 +23,7 @@ local function whatsAppMouseScripts(appObj, requestedAction)
 end
 
 local function insertGif()
-  keycodes.setLayout("ABC") -- HEBREW RELATED
+  KeyCodes.setLayout("ABC") -- HEBREW RELATED
   timer.doAfter(0.4, function()
     eventtap.keyStroke({"shift"}, "tab")
     timer.doAfter(0.4, function()
@@ -42,22 +35,18 @@ local function insertGif()
   end)
 end
 
-local functions = {
-  switchToABCOnSearch = function()
-    switchToABCOnSearch(_appObj)
-  end,
-}
+obj.modal = nil
 
-function obj:bindModalHotkeys(hotkeysTable)
-  for k, v in pairs(functions) do
-    if hotkeysTable[k] then
-      -- print(hs.inspect(v))
-      local mods, key = table.unpack(hotkeysTable[k])
-      obj.modal:bind(mods, key, v)
-    end
-  end
-  return self
-end
+obj.actions = {
+  switchToABCOnSearch = {
+    action = function() util:passthroughShortcut(
+      {"cmd", "f"},
+      obj.modal,
+      function() KeyCodes.setLayout("ABC") end)
+    end,
+    hotkey = {"cmd", "f"},
+  },
+}
 
 function obj:start(appObj)
   _appObj = appObj

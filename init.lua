@@ -17,9 +17,6 @@ hs.logger.defaultLogLevel = "error"
 ipc.cliUninstall()
 ipc.cliInstall()
 window.animationDuration = 0
--- window.highlight.ui.overlayColor = {0, 0, 0, 1}
--- window.highlight.ui.frameWidth = 10
-window.highlight.ui.overlay = true
 
 ---------
 -- SPOONS
@@ -52,9 +49,37 @@ spoon.WifiWatcher:start()
 spoon.StatusBar:start()
 
 -- HOTKEYS ---
-local hotkeys = require("global_hotkeys")
+local hyper = {"shift", "cmd", "alt", "ctrl"}
+local globalShortcuts = {
+  keyboardLayoutManager = {
+    toggleInputSource = { {}, 10 }
+  },
+  globals = {
+    focusMenuBar = {
+      {"cmd", "shift"}, "1"
+    },
+    rightClick = {hyper, "o"},
+    focusDock = {
+      {"cmd", "alt"}, "d"}
+    },
+  windowManager = {
+    pushLeft = {hyper, "left"},
+    pushRight = {hyper, "right"},
+    pushUp = {hyper, "up"},
+    pushDown = {hyper, "down"},
+    maximize = {hyper, "return"},
+    center = {hyper, "c"},
+  },
+  notificationCenter = {
+    firstButton = {hyper, "1"},
+    secondButton = {hyper, "2"},
+    thirdButton = {hyper, "3"},
+    toggle = {hyper, "n"},
+  },
+}
+
 -- global
-spoon.KeyboardLayoutManager:bindHotKeys(hotkeys.keyboardLayoutManager):start()
-spoon.GlobalShortcuts:bindHotKeys(hotkeys.globals)
-spoon.WindowManager:bindHotKeys(hotkeys.windowManager)
-spoon.NotificationCenter:bindHotKeys(hotkeys.notificationCenter)
+spoon.KeyboardLayoutManager:bindHotKeys(globalShortcuts.keyboardLayoutManager):start()
+spoon.GlobalShortcuts:bindHotKeys(globalShortcuts.globals)
+spoon.WindowManager:bindHotKeys(globalShortcuts.windowManager)
+spoon.NotificationCenter:bindHotKeys(globalShortcuts.notificationCenter)

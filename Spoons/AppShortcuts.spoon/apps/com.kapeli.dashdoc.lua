@@ -1,6 +1,4 @@
 local obj = {}
-obj.modal = nil
-
 local _appObj = nil
 
 local function clickOnHistoryMenuItem(appObj)
@@ -13,6 +11,8 @@ local function toggleBookmarks(appObj)
   end
   appObj:selectMenuItem({"Bookmarks", "Hide Bookmarks"})
 end
+
+obj.modal = nil
 
 obj.actions = {
   clickOnHistoryMenuItem = {

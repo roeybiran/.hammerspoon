@@ -1,8 +1,6 @@
 local UI = require("rb.ui")
 
 local obj = {}
-obj.modal = nil
-
 local _appObj = nil
 
 local function goBack(appObj)
@@ -14,6 +12,8 @@ local function goBack(appObj)
     end
   end
 end
+
+obj.modal = nil
 
 obj.actions = {
   goBack = {

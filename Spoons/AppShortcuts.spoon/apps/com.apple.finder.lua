@@ -7,11 +7,8 @@ local ui = require("rb.ui")
 local Util = require("rb.util")
 local GlobalChooser = require("rb.fuzzychooser")
 local FNUtils = require("hs.fnutils")
-local hs = hs
-local next = next
 
 local obj = {}
-obj.modal = nil
 local _appObj = nil
 
 local function getFinderSelection()
@@ -230,6 +227,8 @@ timer.doAfter(0.1, function()
   GlobalChooser:start(selectColumnChooserCallback, columnChoices, {"text"})
 end)
 end
+
+obj.modal = nil
 
 --- browseInLaunchBar - shows files of the current folder in LaunchBar. Requires my [LaunchBar actions](https://github.com/roeybiran/launchbar-actions).
 obj.actions = {

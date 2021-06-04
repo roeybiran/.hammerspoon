@@ -20,29 +20,31 @@ obj.homepage = "https://github.com/Hammerspoon/Spoons"
 obj.license = "MIT - https://opensource.org/licenses/MIT"
 
 local function toggle()
-  ui.getUIElement(application("Control Center"),
-                  {{"AXMenuBar", 1}, {"AXMenuBarItem", 1}}):performAction(
-      "AXPress")
+  ui.getUIElement(
+    application("Control Center"), {
+      {"AXMenuBar", 1},
+      {"AXMenuBarItem", 1}
+    })
+    :performAction("AXPress")
 end
 
 local function moveCursorToBanner(theWindow, shouldClick)
   local windowPosition = theWindow:attributeValue("AXPosition")
   local x = windowPosition.x + 40
   local y = windowPosition.y + 40
-  local originalPosition = Mouse.getAbsolutePosition()
+  local originalPosition = Mouse.absolutePosition()
   local newPosition = {x = x, y = y}
-  Mouse.setAbsolutePosition(newPosition)
+  Mouse.absolutePosition(newPosition)
   if shouldClick then
     eventtap.leftClick(newPosition)
   end
-  Timer.doAfter(0.5, function() Mouse.setAbsolutePosition(originalPosition) end)
+  Timer.doAfter(0.5, function() Mouse.absolutePosition(originalPosition) end)
 end
 
 -- the accessibility structure of notifications has changed drastically in Big Sur:
 -- all banners are nested under the "AXOpaqueProviderGroup", where each banner is an "AXGroup"
 local function clickButton(theButton)
-  local app = application.applicationsForBundleID(
-                  "com.apple.notificationcenterui")[1]
+  local app = application.applicationsForBundleID("com.apple.notificationcenterui")[1]
   local axApp = ax.applicationElement(app)
   local container = ui.getUIElement(axApp, {
     {"AXWindow", 1},

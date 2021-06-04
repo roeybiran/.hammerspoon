@@ -1,6 +1,6 @@
 --- === Globals ===
 ---
---- Miscellaneous automations that are not app-specific.
+--- Various hotkey-bound automations that are not app-specific.
 local application = require("hs.application")
 local ax = require("hs.axuielement")
 local UI = require("rb.ui")
@@ -21,8 +21,7 @@ local function focusMenuBar()
 end
 
 local function rightClick()
-    ax.applicationElement(application.frontmostApplication()):attributeValue("AXFocusedUIElement"):performAction(
-        "AXShowMenu")
+    ax.applicationElement(application.frontmostApplication()):attributeValue("AXFocusedUIElement"):performAction("AXShowMenu")
 end
 
 local function focusDock()

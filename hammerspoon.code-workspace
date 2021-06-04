@@ -9,7 +9,8 @@
 		"editor.tabSize": 2,
     "editor.detectIndentation": false,
     "Lua.diagnostics.globals": [
-      "hs"
+      "hs",
+      "spoon"
     ]
 	}
 }

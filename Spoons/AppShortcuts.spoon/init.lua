@@ -29,6 +29,27 @@ local appModals = {}
 obj.currentBundleID = nil
 obj.currentAppObj = nil
 
+-- TODO: move to a different module
+-- http://www.hammerspoon.org/Spoons/URLDispatcher.html
+local function toggleBraveAsDefaultBrowserOnItsLaunch(event, bundleID)
+  if bundleID ~= "com.brave.Browser" then return end
+  local newBrowser
+  if event == Application.watcher.launched then
+    newBrowser = "com.brave.Browser"
+  elseif event == Application.watcher.terminated then
+    newBrowser = "com.apple.Safari"
+  else
+    return
+  end
+  hs.settings.set("RBDefaultURLHandler", newBrowser)
+  print(">>> default browser is now: " .. newBrowser)
+  spoon.URLDispatcher.default_handler = newBrowser
+end
+
+hs.loadSpoon("URLDispatcher"):start()
+local defaultUrlHandler = hs.settings.get("RBDefaultURLHandler") or "com.apple.Safari"
+toggleBraveAsDefaultBrowserOnItsLaunch(Application.watcher.launched, defaultUrlHandler)
+
 local function enterAppEnvironment(appObj, bundleID)
   for key, value in pairs(appModals) do
     if key == bundleID then
@@ -41,6 +62,7 @@ end
 
 local function appWatcherCallback(_, event, appObj)
   local newBundleID = appObj:bundleID()
+  toggleBraveAsDefaultBrowserOnItsLaunch(event, newBundleID)
   if event == Application.watcher.activated or event == "FROM_WINDOW_WATCHER" then
     if newBundleID == frontAppBundleID then
       return
@@ -134,17 +156,15 @@ function obj:init()
       if string.sub(file, -3) == "lua" then
         local basenameAndBundleID = string.sub(file, 1, -5)
         local script = dofile(appScriptsDir .. file)
-        if script.actions then
-          script.modal = Hotkey.modal.new()
-          for _, value in pairs(script.actions) do
-            local hotkey = value.hotkey
-            if hotkey then
-              local mods, key = table.unpack(hotkey)
-              script.modal:bind(mods, key, value.action)
-            end
+        script.modal = Hotkey.modal.new()
+        for _, value in pairs(script.actions) do
+          local hotkey = value.hotkey
+          if hotkey then
+            local mods, key = table.unpack(hotkey)
+            script.modal:bind(mods, key, value.action)
           end
-          appModals[basenameAndBundleID] = script
         end
+        appModals[basenameAndBundleID] = script
       end
     end
   end

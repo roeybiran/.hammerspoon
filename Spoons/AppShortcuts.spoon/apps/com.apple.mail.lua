@@ -3,14 +3,10 @@ local ax = require("hs.axuielement")
 local ui = require("rb.ui")
 local fuzzyChooser = require("rb.fuzzychooser")
 local Util = require("rb.util")
-local Hotkey = require("hs.hotkey")
-local hs = hs
 local FN = require("hs.fnutils")
 
 local obj = {}
-obj.modal = nil
 local _appObj = nil
-
 
 local function chooserCallback(choice)
 os.execute(string.format([[/usr/bin/open "%s"]], choice.url))
@@ -96,9 +92,11 @@ local function cycleThroughMessagesList(appObj, direction)
     {"AXScrollArea", 1},
     {"AXTable", 1},
   })
+  if not messagesContainer then return end
   _navigateThroughGenericList(messagesContainer, direction)
-
 end
+
+obj.modal = nil
 
 obj.actions = {
   selectNextMessage = {

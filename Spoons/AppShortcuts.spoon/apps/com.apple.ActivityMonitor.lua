@@ -2,7 +2,6 @@ local ax = require("hs.axuielement")
 local ui = require("rb.ui")
 
 local obj = {}
-obj.modal = nil
 local _appObj = nil
 
 local function clickActivityMonitorRadioButton(appObj, aButton)
@@ -13,6 +12,8 @@ local function clickActivityMonitorRadioButton(appObj, aButton)
     {"AXRadioButton", tonumber(aButton)}
   }):performAction("AXPress")
 end
+
+obj.modal = nil
 
 obj.actions = {
   radioButton1 = {

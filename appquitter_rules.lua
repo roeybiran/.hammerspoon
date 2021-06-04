@@ -86,6 +86,7 @@ return {
   "pl.maketheweb.pixelsnap2",
   "com.electron.realtimeboard",
   "us.zoom.xos",
+  "abnerworks.Typora",
   ["at.obdev.LaunchBar.ActionEditor"] = {quit = 0.5, hide = 0.5},
   ["com.apple.iphonesimulator"] = {quit = 1, hide = 0.5},
   ["com.google.Chrome"] = {quit = 4, hide = 1},

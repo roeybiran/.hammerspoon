@@ -89,6 +89,11 @@ local function caffeinateMenu()
 
 end
 
+-- TODO: move to a module
+Window.highlight.ui.overlayColor = {0, 0, 0, 0}
+Window.highlight.ui.frameWidth = 10
+Window.highlight.ui.overlay = true
+
 local function mainMenu()
   return {
     {title = "Caffeinate", menu = caffeinateMenu()},

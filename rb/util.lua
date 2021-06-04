@@ -17,7 +17,7 @@ end
 function obj.doubleLeftClick(coords, mods, restoring)
   local originalMousePosition
   if restoring then
-    originalMousePosition = Mouse.getAbsolutePosition()
+    originalMousePosition = Mouse.absolutePosition()
   end
   local point = Geometry.point(coords)
   mods = mods or {}
@@ -32,12 +32,19 @@ function obj.doubleLeftClick(coords, mods, restoring)
     Eventtap.event.newMouseEvent(Eventtap.event.types["leftMouseUp"], point):setProperty(clickState, 2):setFlags(mods)
         :post()
     if restoring then
-      Mouse.setAbsolutePosition(originalMousePosition)
+      Mouse.absolutePosition(originalMousePosition)
     end
   end)
 end
 
-function obj.strictShortcut(keyBinding, app, modal, conditionalFunction, successFunction)
+function obj:passthroughShortcut(keyBinding, modal, perform)
+  perform()
+  modal:exit()
+  Eventtap.keyStroke(table.unpack(keyBinding))
+  modal:enter()
+end
+
+function obj:strictShortcut(keyBinding, app, modal, conditionalFunction, successFunction)
   if (app:bundleID() == Window.focusedWindow():application():bundleID()) then
     local perform = true
     if conditionalFunction ~= nil then

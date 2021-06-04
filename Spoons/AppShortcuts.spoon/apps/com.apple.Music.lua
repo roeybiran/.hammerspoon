@@ -1,19 +1,7 @@
 local ui = require("rb.ui")
 
 local obj = {}
-obj.modal = nil
 local _appObj = nil
-
-
-local function pane1(appObj)
-  local _pane1 = {{"AXWindow", 1}, {"AXSplitGroup", 1}, {"AXScrollArea", 1}, {"AXOutline", 1}}
-  return ui.getUIElement(appObj, _pane1):setAttributeValue("AXFocused", true)
-end
-
-local function pane2(appObj)
-  local _pane2 = {{"AXWindow", 1}, {"AXSplitGroup", 1}, {"AXGroup", 1}, {"AXGroup", 1}, {"AXScrollArea", 1}}
-  return ui.getUIElement(appObj, _pane2):attributeValue("AXChildren")[1]:setAttributeValue("AXFocused", true)
-end
 
 local function focusFilterField(appObj)
   local filterField = ui.getUIElement(appObj, {{"AXWindow", 1}, {"AXSplitGroup", 1}, {"AXTextField", 1}})
@@ -22,31 +10,16 @@ local function focusFilterField(appObj)
   else
     filterField:setAttributeValue("AXFocused", true)
   end
-
 end
 
-local functions = {
-  pane1 = function()
-    pane1(_appObj)
-  end,
-  pane2 = function()
-    pane2(_appObj)
-  end,
-  focusFilterField = function()
-    focusFilterField(_appObj)
-  end,
+obj.modal = nil
+
+obj.actions = {
+  focusFilterField = {
+    action = function() focusFilterField(_appObj) end,
+    hotkey = {"cmd", "l"}
+  }
 }
-
-function obj:bindModalHotkeys(hotkeysTable)
-  for k, v in pairs(functions) do
-    if hotkeysTable[k] then
-      -- print(hs.inspect(v))
-      local mods, key = table.unpack(hotkeysTable[k])
-      obj.modal:bind(mods, key, v)
-    end
-  end
-  return self
-end
 
 function obj:start(appObj)
   _appObj = appObj

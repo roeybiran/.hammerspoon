@@ -1,16 +1,16 @@
 local EventTap = require("hs.eventtap")
 
 local obj = {}
-obj.modal = nil
-
 local _appObj = nil
 
+obj.modal = nil
+
 obj.actions = {
-  nextTab = {
+  next_tab = {
     action = function() EventTap.keyStroke("cmd", "`") end,
     hotkey = {"ctrl", "tab"},
   },
-  previousTab = {
+  previous_tab = {
     action = function() EventTap.keyStroke({"cmd", "shift"}, "`") end,
     hotkey = {{"ctrl", "shift"}, "tab"}
   },

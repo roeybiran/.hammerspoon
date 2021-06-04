@@ -68,7 +68,7 @@ end
 ---  * `bundleID` - A string, the bundle identifier of event-triggering app.
 ---
 function obj:update(event, bundleID)
-  -- bail out if app is blacklisted
+  -- bail out if app is excluded
   if event == Application.watcher.deactivated or event == Application.watcher.launched then
     updateIntervalsForBackgroundLaunchedOrDeactivatedApp(bundleID)
   end
@@ -166,8 +166,8 @@ function obj:start(config)
   end
 
   local _, dockApps, _ = AppleScript [[
-        tell app "System Events" to return the bundle identifier of every application process whose background only is false
-        ]]
+  tell app "System Events" to return the bundle identifier of every application process whose background only is false
+  ]]
   for _, appID in ipairs(dockApps) do
     if not FnUtils.contains(appsWithRunningTimers, appID) then
       updateIntervalsForBackgroundLaunchedOrDeactivatedApp(appID)

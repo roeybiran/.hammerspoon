@@ -5,15 +5,19 @@ Personal [Hammerspoon](https://github.com/Hammerspoon/hammerspoon) config.
 ## Features
 
 - Documented, modular and completely Spoon-based.
-- Includes, amongst others: a `~/Downloads` watcher, Wi-Fi watcher, and an extensible app watcher with lots of (optional) app-specific automations + UI scripts.
-- Easy on system resources, even with all Spoons loaded.
-- Linted with `luacheck` and formatted with `LuaFormatter`.
+- Includes, among others: a `~/Downloads` watcher, Wi-Fi watcher, and an extensible app watcher with lots of app-specific automations.
+- Easy on system resources.
 
 ## Notes
 
 - Works best with v0.9.79 or newer.
-- The `rb` folder included with this repo contains dependencies for some Spoons. It is required.
-- Spoons with names prefixed with an underscore are app-specific. They must be used in conjunction with `AppSpoonsManager.spoon` and `AppWatcher.spoon`, and will be activated when the target app gains focus. This approach may be an overkill with apps for which I have a single automation, but I find it to promote clarity and separation-of-concerns in the config.
+- The `rb` folder included with this repo contains dependencies for some Spoons. It's required.
+
+## To Do
+
+## What's New
+
+- Massive general cleanup and dead code removal.
 
 ## API
 
@@ -25,7 +29,7 @@ Ideally, this module's `update` method will be called in each callback of `hs.ap
 
 #### AppQuitter:update(event, bundleID)
 
-_Method_
+Method
 
 Updates the module's timers.
 
@@ -36,7 +40,7 @@ Updates the module's timers.
 
 #### AppQuitter:start([rules])
 
-_Method_
+Method
 
 Sets up and starts the module. Begins the tracking of running dock apps,
 or resumes tracking of a given app if its timer is already running.
@@ -60,7 +64,7 @@ Manages the activation and deactivation of the app-specific Spoons when an app g
 
 #### AppSpoonsManager:update(appObj, bundleID)
 
-_Method_
+Method
 
 Calls the `start()` method of the Spoon for the focused app, and calls `exit()` on all other Spoons. This method must be called in each callback of your `hs.application.watcher` instance.
 
@@ -75,19 +79,19 @@ An `hs.application.watcher` instance bolstered by `hs.window.filter` to catch an
 
 #### AppWatcher.transientApps
 
-_Variable_
+Variable
 
 A table containing apps you consider to be transient and want to be taken into account by the window filter. Elements should have the same structure as the `filters` parameter of hs.window.filter `setFilters` method.
 
 #### AppWatcher.stop()
 
-_Method_
+Method
 
 Stops the module.
 
 #### AppWatcher:start()
 
-_Method_
+Method
 
 Starts the module.
 
@@ -97,25 +101,25 @@ Perform actions when the system's theme changes. Actions can be configured by ed
 
 #### AppearanceWatcher:stop()
 
-_Method_
+Method
 
 Stops this module.
 
 #### AppearanceWatcher:start()
 
-_Method_
+Method
 
 starts this module.
 
 #### AppearanceWatcher:toggle()
 
-_Method_
+Method
 
 Toggles this module.
 
 #### AppearanceWatcher:isActive()
 
-_Method_
+Method
 
 Determines whether module is active.
 
@@ -129,25 +133,25 @@ Enters a transient mode in which the left and right arrow keys decrease and incr
 
 #### BrightnessControl:start()
 
-_Method_
+Method
 
 Starts the module.
 
 #### BrightnessControl:stop()
 
-_Method_
+Method
 
 Stops the module. Bound to the escape and return keys.
 
 #### BrightnessControl.increaseBrightnessKey
 
-_Variable_
+Variable
 
 A hotkey that increases brightness. It's a table that must include 2 keys, "mods" and "key", each must be of the same type as the first 2 parameters to the `hs.hotkey.bind` method. Defaults to →.
 
 #### BrightnessControl.decreaseBrightnessKey
 
-_Variable_
+Variable
 
 A hotkey that decreases brightness. It's a table that must include 2 keys, "mods" and "key", each must be of the same type as the first 2 parameters to the `hs.hotkey.bind` method. Defaults to ←.
 
@@ -157,25 +161,25 @@ Reload the environment when .lua files in ~/.hammerspoon are modified.
 
 #### ConfigWatcher.toggle()
 
-_Method_
+Method
 
 Toggles the module.
 
 #### ConfigWatcher.stop()
 
-_Method_
+Method
 
 Stops the module.
 
 #### ConfigWatcher.start()
 
-_Method_
+Method
 
 Starts the module.
 
 #### ConfigWatcher.isActive()
 
-_Method_
+Method
 
 **Returns:**
 
@@ -188,13 +192,13 @@ The script can be found in the Spoon's folder.
 
 #### DownloadsWatcher:stop()
 
-_Method_
+Method
 
 Stops the module.
 
 #### DownloadsWatcher:start()
 
-_Method_
+Method
 
 Starts the module.
 
@@ -204,7 +208,7 @@ Miscellaneous automations that are not app-specific.
 
 #### Globals:bindHotKeys(\_mapping)
 
-_Method_
+Method
 
 This module offers the following functionalities:
 
@@ -228,7 +232,7 @@ Features:
 
 #### KeyboardLayoutManager:setInputSource(bundleid)
 
-_Method_
+Method
 
 Switch to an app's last used keyboard layout. Typically, called in an app watcher callback for the activated app.
 
@@ -238,7 +242,7 @@ Switch to an app's last used keyboard layout. Typically, called in an app watche
 
 #### KeyboardLayoutManager:bindHotkeys(mapping)
 
-_Method_
+Method
 
 Binds hotkeys for this module
 
@@ -253,7 +257,7 @@ Notification Center automations.
 
 #### NotificationCenter:bindHotkeys(\_mapping)
 
-_Method_
+Method
 
 Bind hotkeys for this module. The `_mapping` table keys correspond to the following functionalities:
 
@@ -275,7 +279,7 @@ Clicks on the "volume" status bar item to reveal its volume slider, and enters a
 
 #### VolumeControl:start()
 
-_Method_
+Method
 
 Activates the modules and enters the modal. The following hotkeys/functionalities are available:
 
@@ -293,7 +297,7 @@ Respond to changes in the current Wi-Fi network.
 
 #### WifiWatcher:userCallback()
 
-_Method_
+Method
 
 A callback to run when the Wi-Fi changes.
 
@@ -303,7 +307,7 @@ A callback to run when the Wi-Fi changes.
 
 #### WifiWatcher:start()
 
-_Method_
+Method
 
 Starts the Wi-Fi watcher.
 
@@ -313,7 +317,7 @@ Starts the Wi-Fi watcher.
 
 #### WifiWatcher:stop()
 
-_Method_
+Method
 
 Stops the Wi-Fi watcher.
 
@@ -323,7 +327,7 @@ Stops the Wi-Fi watcher.
 
 #### WifiWatcher:isActive()
 
-_Method_
+Method
 
 **Returns:**
 
@@ -331,7 +335,7 @@ _Method_
 
 #### WifiWatcher:toggle()
 
-_Method_
+Method
 
 Toggles the watcher.
 
@@ -350,7 +354,7 @@ Features:
 
 #### WindowManager:bindHotKeys(\_mapping)
 
-_Method_
+Method
 
 This module offers the following functionalities:
 
@@ -400,7 +404,7 @@ Finder automations.
 
 #### \_Finder:bindModalHotkeys(hotkeysTable)
 
-_Method_
+Method
 
 **Parameters:**
 
@@ -444,7 +448,7 @@ Safari automations.
 
 #### \_Safari:bindModalHotkeys(hotkeysTable)
 
-_Method_
+Method
 
 **Parameters:**
 

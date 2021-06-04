@@ -1,13 +1,13 @@
 local osascript = require("hs.osascript")
 
 local obj = {}
-obj.modal = nil
-
 local _appObj = nil
 
 local function searchNotesWithLaunchBar()
   osascript.applescript("tell app \"LaunchBar\" to perform action \"Notes: Search\"")
 end
+
+obj.modal = nil
 
 obj.actions = {
   searchNotesWithLaunchBar = {

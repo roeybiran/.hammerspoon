@@ -17,12 +17,10 @@ local function script_path()
 end
 
 local obj = {}
-obj.modal = nil
 local _appObj = nil
 local _observer = nil
 local layoutsPerURLKey = "RBSafariLayoutsForURL"
 local notficationObserver = nil
-
 
 local function moveFocusToSafariMainArea(appObj, includeSidebar)
   -- ui scripting notes:
@@ -175,9 +173,14 @@ local function rightSizeBookmarksOrHistoryColumn(appObj)
     {"AXOutline", 1},
     {"AXGroup", 1},
     {"AXButton", "AXTitle", "Website"}
-  }):attributeValue("AXFrame")
-  local x = firstColumn.x + firstColumn.w
-  local y = firstColumn.y + 5
+  })
+  if not firstColumn then
+    print("Safari/rightSizeBookmarksOrHistoryColumn: couldn't find the first column")
+    return
+  end
+  local frame = firstColumn:attributeValue("AXFrame")
+  local x = frame.x + frame.w
+  local y = frame.y + 5
   Util.doubleLeftClick({x, y})
 end
 
@@ -284,6 +287,8 @@ local function setupTitleChangeObserver(appObj)
   _observer:callback(onTitleChangeObserverCallback)
   _observer:start()
 end
+
+obj.modal = nil
 
 obj.actions = {
   --- moveTabLeft - moves the focused tab one position to the left.

@@ -2,7 +2,6 @@ local ax = require("hs.axuielement")
 local ui = require("rb.ui")
 
 local obj = {}
-obj.modal = nil
 local _appObj = nil
 
 local function performContactAction(appObj, button)
@@ -11,31 +10,26 @@ local function performContactAction(appObj, button)
   btn:performAction("AXPress")
 end
 
-local functions = {
-  contactAction1 = function()
-    performContactAction(_appObj, 4)
-  end,
-  contactAction2 = function()
-    performContactAction(_appObj, 5)
-  end,
-  contactAction3 = function()
-    performContactAction(_appObj, 6)
-  end,
-  contactAction4 = function()
-    performContactAction(_appObj, 7)
-  end,
-}
+obj.modal = nil
 
-function obj:bindModalHotkeys(hotkeysTable)
-  for k, v in pairs(functions) do
-    if hotkeysTable[k] then
-      -- print(hs.inspect(v))
-      local mods, key = table.unpack(hotkeysTable[k])
-      obj.modal:bind(mods, key, v)
-    end
-  end
-  return self
-end
+obj.actions = {
+  contactAction1 = {
+    action = function() performContactAction(_appObj, 4) end,
+    hotkey = {"cmd", "1"}
+  },
+  contactAction2 = {
+    action = function() performContactAction(_appObj, 5) end,
+    hotkey = {"cmd", "2"}
+  },
+  contactAction3 = {
+    action = function() performContactAction(_appObj, 6) end,
+    hotkey = {"cmd", "3"}
+  },
+  contactAction4 = {
+    action = function() performContactAction(_appObj, 7) end,
+    hotkey = {"cmd", "4"}
+  },
+}
 
 function obj:start(appObj)
   _appObj = appObj
