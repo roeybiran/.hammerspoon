@@ -4,14 +4,13 @@
 --- The script can be found in the Spoon's folder.
 ---
 local PathWatcher = require("hs.pathwatcher")
-local Task = require("hs.task")
 local FS = require("hs.fs")
-local Fnutils = require("hs.fnutils")
+local FNUtils = require("hs.fnutils")
 local Settings = require("hs.settings")
 local Timer = require("hs.timer")
-local Pasteboard = require("hs.pasteboard")
-local spoon = spoon
+local Task = require("hs.task")
 
+local spoon = spoon
 local obj = {}
 
 obj.__index = obj
@@ -37,56 +36,173 @@ end
 local processedDownloadsInodesKey = "RBDownloadsWatcherProcessedDownloadsInodes"
 local home = os.getenv("HOME")
 local downloadsDir = home .. "/Downloads"
-local shellScript = script_path() .. "/process_path.sh"
--- local supportedFormats = {"pdf", "zip", "tgz", "gz", "dmg", "heic", "webp"}
-local filesToIgnore = {
-  { pattern = ".DS_Store", isRegex =  false },
-  { pattern = ".localized", isRegex = false },
-  { pattern = ".", isRegex = false },
-  { pattern = "..", isRegex = false },
-  { pattern = "^.*%.crdownload$", isRegex = true },
-  { pattern = "^.*%.download$", isRegex = true },
+local trash = home .. "/.Trash/"
+
+local function moveToTrash(path)
+  local _displayName = FS.displayName(path)
+  os.rename(path, trash .. _displayName)
+end
+
+local function stripExtension(path)
+  local splitted = FNUtils.split(path, '.', true)
+  return table.unpack(splitted, 1, #splitted - 1)
+end
+
+local function convertToJpg(path)
+  local target = stripExtension(path) .. ".jpg"
+  Task.new("/usr/bin/sips",
+    function()
+      moveToTrash(path)
+    end,
+    {"-s", "format", "jpeg", path, "--out", target}
+  ):start()
+end
+
+local function renameJpegToJpg(path)
+  local nameWithoutExt = stripExtension(path)
+  os.rename(path, nameWithoutExt .. ".jpg")
+end
+
+local function handleZip(path)
+  local nameWithoutExt = stripExtension(path)
+  local newDir, err = FS.mkdir(nameWithoutExt)
+  if not newDir then
+    print(err)
+    return
+  end
+  Task.new("/usr/bin/ditto", function()
+    moveToTrash(path)
+  end, {"-xk", path, nameWithoutExt})
+    :start()
+end
+
+local function handlePdf(path)
+  local script = script_path() .. "/get_pdf_text.py"
+  Task.new(script, function(exit, stdout, stderr)
+    print(exit, stdout, stderr)
+  end, { path })
+    :start()
+
+  --[[
+
+names = {
+    "bezeqint": "בזק בינלאומי",
+    "payme": "פאיימי",
+    "avrech": "אברך-אלון",
+    "bezeq": "בזק החברה הישראלית לתקשורת",
+    "apple music": "Apple Music",
+    "apple icloud": "iCloud:",
+    "icount": "אייקאונט מערכות",
+    "google": "Google Workspace",
+    "upress": "upress",
+    "pango": "פנגו",
+    "meshulam": "משולם",
+    "facebook": "Facebook",
+
+        for name in names:
+        if names[name] in pdftext:
+            outputfile = "{}/Downloads/{} {}-{}.pdf".format(
+                os.getenv("HOME"), name, year, month
+            )
+            os.rename(
+                inputfile,
+                outputfile,
+            )
+            break
+
 }
+
+   ]]
+end
+
+local function handleGz(path)
+  Task.new("/usr/bin/tar", function(exit, out, err)
+    print(exit, out, err)
+    moveToTrash(path)
+  end, {"-xvf", path, "-C", downloadsDir})
+    :start()
+end
+
+local function handleDmg(path)
+  Task.new(script_path() .. "handle_dmg.sh", function () end, { path })
+end
+
+local rules = {
+  {
+    patterns = {".DS_Store", ".localized", ".", ".."},
+    isRegex = false,
+    exec = nil,
+  },
+  {
+    patterns = {"^.*%.crdownload$", "^.*%.download$"},
+    isRegex = true,
+    exec = nil,
+  },
+  {
+    patterns = {"%.ics"},
+    isRegex = true,
+    exec = hs.open
+  },
+  {
+    patterns = {"%.heic", "%.webp"},
+    isRegex = true,
+    exec = convertToJpg
+  },
+  {
+    patterns = {"%.jpeg"},
+    isRegex = true,
+    exec = renameJpegToJpg
+  },
+  {
+    patterns = {"%.zip"},
+    isRegex = true,
+    exec = handleZip
+  },
+  {
+    patterns = {"%.pdf"},
+    isRegex = true,
+    exec = handlePdf
+  },
+  {
+    patterns = {"%.tgz", "%.gz"},
+    isRegex = true,
+    exec = handleGz
+  },
+  {
+    patterns = { "%.dmg" },
+    isRegex = true,
+    exec = handleDmg
+  }
+}
+
 local processedDownloadsInodes
 local pathWatcher
 local throttledTimer
 
-local function shellCallback(_, stdout, stderr)
-  if string.match(stderr, "%s+") then
-    print("DownloadsWatcher shell script stderr: ", stderr)
-  end
-  if string.match(stdout, "%s+") then
-    print("DownloadWatcher shell script stdout: ", stdout)
-  end
-  if string.match(stdout, "/Downloads/") then
-    -- Pasteboard.setContents(stdout)
-  end
-  spoon.StatusBar:removeTask()
-end
-
-local function shouldProcessFile(settings,  fileName)
-  local shouldProcess = true
-    for _, setting in ipairs(settings) do
-      if setting.isRegex then
-        if string.find(fileName, setting.pattern) then
-          print("match", fileName, setting)
-          shouldProcess = false
-          break
+local function shouldProcessFile(_rules, fileName)
+  local functionToExecute = nil
+    for _, setting in ipairs(_rules) do
+        for _, pattern in ipairs(setting.patterns) do
+          if setting.isRegex then
+            if string.find(fileName, pattern) then
+              functionToExecute = setting.exec
+              break
+            end
+          else
+            if fileName == setting.pattern then
+              functionToExecute = setting.exec
+              break
+            end
+          end
         end
-      else
-        if fileName == setting.pattern then
-          shouldProcess = false
-          break
-        end
-      end
     end
-    return  shouldProcess
+    return functionToExecute
 end
 
 local function watcherCallback()
-  local iteratedFiles = {}
-  local pathsToProcess = {}
   local iterFn, dirObj = FS.dir(downloadsDir)
+  local totalFiles = {}
+  local filesPendingProcessing = {}
 
   if not iterFn then
     print(string.format("DownloadsWatcher FS.dir enumerator error: %s", dirObj))
@@ -94,18 +210,19 @@ local function watcherCallback()
   end
 
   for file in iterFn, dirObj do
-    if shouldProcessFile(filesToIgnore, file) then
+    local functionToExecute = shouldProcessFile(rules, file)
+    if functionToExecute then
       local fullPath = downloadsDir .. "/" .. file
       local inode = FS.attributes(fullPath, "ino")
-      if not Fnutils.contains(processedDownloadsInodes, inode) then
+      if not FNUtils.contains(processedDownloadsInodes, inode) then
         table.insert(processedDownloadsInodes, inode)
-        table.insert(pathsToProcess, fullPath)
+        table.insert(filesPendingProcessing, { path = fullPath, exec = functionToExecute })
       end
-      table.insert(iteratedFiles, file)
+      table.insert(totalFiles, file)
     end
   end
 
-  if tableCount(iteratedFiles) == 0 then
+  if tableCount(totalFiles) == 0 then
     print("DownloadsWatcher: ~/Downloads emptied, clearing inodes list")
     Settings.clear(processedDownloadsInodesKey)
     processedDownloadsInodes = {}
@@ -114,9 +231,10 @@ local function watcherCallback()
   end
 
   -- process the files
-  for _, path in ipairs(pathsToProcess) do
-    spoon.StatusBar:addTask()
-    Task.new(shellScript, shellCallback, {path}):start()
+  for _, file in ipairs(filesPendingProcessing) do
+    -- spoon.StatusBar:addTask()
+    -- Task.new(shellScript, shellCallback, {file}):start()
+    file.exec(file.path)
   end
 end
 

@@ -18,6 +18,25 @@ ipc.cliUninstall()
 ipc.cliInstall()
 window.animationDuration = 0
 
+-- -- alternatively, call .nextWindow() or .previousWindow() directly (same as hs.window.switcher.new():next())
+-- hs.hotkey.bind('alt','tab','Next window',hs.window.switcher.nextWindow)
+-- -- you can also bind to `repeatFn` for faster traversing
+-- hs.hotkey.bind('alt-shift','tab','Prev window',hs.window.switcher.previousWindow,nil,hs.window.switcher.previousWindow)
+-- hs.window.switcher.ui.textColor = {0.9,0.9,0.9}
+
+-- hs.window.switcher.ui.fontName = 'Lucida Grande'
+-- hs.window.switcher.ui.textSize = 16
+-- hs.window.switcher.ui.highlightColor = {0.8,0.5,0,0.8}
+-- hs.window.switcher.ui.backgroundColor = {0.3,0.3,0.3,1}
+-- hs.window.switcher.ui.onlyActiveApplication = false
+-- hs.window.switcher.ui.showTitles = true
+-- hs.window.switcher.ui.titleBackgroundColor = {0,0,0}
+-- hs.window.switcher.ui.showThumbnails = false
+-- hs.window.switcher.ui.thumbnailSize = 128
+-- hs.window.switcher.ui.showSelectedThumbnail = true
+-- hs.window.switcher.ui.selectedThumbnailSize = 384
+-- hs.window.switcher.ui.showSelectedTitle = true
+
 ---------
 -- SPOONS
 ---------
