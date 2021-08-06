@@ -149,18 +149,21 @@ AppleScript(script)
 end
 
 local function newBookmarksFolder(appObj)
-  local title = appObj:focusedWindow():title()
-  if string.match(title, "Bookmarks") then
-    UI.getUIElement(appObj, {
-      {"AXWindow", 1},
-      {"AXSplitGroup", 1},
-      {"AXTabGroup", 1},
-      {"AXGroup", 1},
-      {"AXButton", 1}
-    }):performAction("AXPress")
-  else
-    appObj:selectMenuItem({"File", "New Private Window"})
+  local focusedWindow = appObj:focusedWindow()
+  if focusedWindow then
+    local focusedWindowTitle = focusedWindow:title()
+    if string.match(focusedWindowTitle, "Bookmarks") then
+      UI.getUIElement(appObj, {
+        {"AXWindow", 1},
+        {"AXSplitGroup", 1},
+        {"AXTabGroup", 1},
+        {"AXGroup", 1},
+        {"AXButton", 1}
+      }):performAction("AXPress")
+      return
+    end
   end
+  appObj:selectMenuItem({"File", "New Private Window"})
 end
 
 local function rightSizeBookmarksOrHistoryColumn(appObj)

@@ -26,6 +26,8 @@ local TIMERS_PLIST_PATH = os.getenv("HOME") .. "/Library/Preferences/com.rb.hs.a
 local appWatcher = nil
 
 function obj.log()
+  -- spoon.AppQuitter.log()
+  print"AppQuitter log:"
   for line in io.lines(os.getenv("HOME") .. "/Library/Logs/com.rb.hs.appquitter.errors.log") do
     print(line)
   end
@@ -151,18 +153,20 @@ function obj:start(config)
   end
 
   -- load rules
-  local DEFAULT_QUIT_INTERVAL = config.defaultQuitInterval
-  local DEFAULT_HIDE_INTERVAL = config.defaultHideInterval
+  local quitInterval = config.defaultQuitInterval
+  local hideInterval = config.defaultHideInterval
   for key, value in pairs(config.rules) do
-    if tonumber(key) then
-      rules[value] = {quit = DEFAULT_QUIT_INTERVAL, hide = DEFAULT_HIDE_INTERVAL}
+    local appUsesDefaultIntervals = tonumber(key)
+    local appName;
+    if appUsesDefaultIntervals then
+      appName = value
     else
-      rules[key] = {
-        -- convert to seconds
-        quit = value.quit * (60 * 60),
-        hide = value.hide * (60 * 60),
-      }
+      appName = key
+      -- convert to seconds
+      quitInterval = math.max((value.quit or 0) * (60 * 60), quitInterval)
+      hideInterval = math.max((value.hide or 0) * (60 * 60), hideInterval)
     end
+    rules[appName] = {quit = quitInterval, hide = hideInterval}
   end
 
   local _, dockApps, _ = AppleScript [[

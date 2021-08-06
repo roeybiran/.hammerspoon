@@ -76,55 +76,117 @@ local function handleZip(path)
     :start()
 end
 
-local function handlePdf(path)
-  local script = script_path() .. "/get_pdf_text.py"
-  Task.new(script, function(exit, stdout, stderr)
-    print(exit, stdout, stderr)
-  end, { path })
-    :start()
-
-  --[[
-
-names = {
-    "bezeqint": "בזק בינלאומי",
-    "payme": "פאיימי",
-    "avrech": "אברך-אלון",
-    "bezeq": "בזק החברה הישראלית לתקשורת",
-    "apple music": "Apple Music",
-    "apple icloud": "iCloud:",
-    "icount": "אייקאונט מערכות",
-    "google": "Google Workspace",
-    "upress": "upress",
-    "pango": "פנגו",
-    "meshulam": "משולם",
-    "facebook": "Facebook",
-
-        for name in names:
-        if names[name] in pdftext:
-            outputfile = "{}/Downloads/{} {}-{}.pdf".format(
-                os.getenv("HOME"), name, year, month
-            )
-            os.rename(
-                inputfile,
-                outputfile,
-            )
-            break
-
+local rules = {
+  {
+    targetName = "bezeqint",
+    tokens = {
+      "בזק בינלאומי"
+    }
+  },
+  {
+    targetName = "payme",
+    tokens = {
+      "פאיימי"
+    }
+  },
+  {
+    targetName = "avrech",
+    tokens = {
+      "אברך-אלון"
+    }
+  },
+  {
+    targetName = "bezeq",
+    tokens = {
+      "בזק החברה הישראלית לתקשורת"
+    }
+  },
+  {
+    targetName = "apple music",
+    tokens = {
+      "Apple Music"
+    }
+  },
+  {
+    targetName = "apple icloud",
+    tokens = {
+      "iCloud:"
+    }
+  },
+  {
+    targetName = "icount",
+    tokens = {
+      "אייקאונט מערכות"
+    }
+  },
+  {
+    targetName = "google",
+    tokens = {
+      "Google Workspace"
+    }
+  },
+  {
+    targetName = "upress",
+    tokens = {
+      "upress"
+    }
+  },
+  {
+    targetName = "pango",
+    tokens = {
+      "פנגו"
+    }
+  },
+  {
+    targetName = "meshulam",
+    tokens = {
+      "משולם"
+    }
+  },
+  {
+    targetName = "facebook",
+    tokens = {
+      "Facebook"
+    }
+  },
 }
 
-   ]]
+local function renamePdfBasedOnText(path, text)
+  local year
+  local month
+  for _, rule in ipairs(rules) do
+    for _, token in ipairs(rule.tokens) do
+      print(token)
+    end
+  end
+end
+
+local function handlePdf(path)
+  local script = script_path() .. "/get_pdf_text.py"
+  Task.new(script, function(exit, textResult, stderr)
+    if exit ~= 0 then print(stderr) end
+    renamePdfBasedOnText(path, textResult)
+  end, { path })
+    :start()
 end
 
 local function handleGz(path)
-  Task.new("/usr/bin/tar", function(exit, out, err)
-    print(exit, out, err)
-    moveToTrash(path)
-  end, {"-xvf", path, "-C", downloadsDir})
-    :start()
+  Task.new("/usr/bin/tar",
+    function(exit, out, err)
+      print(exit, out, err)
+      moveToTrash(path)
+    end,
+    {"-xvf", path, "-C", downloadsDir}
+  ):start()
 end
 
 local function handleDmg(path)
-  Task.new(script_path() .. "handle_dmg.sh", function () end, { path })
+  Task.new(script_path() .. "handle_dmg.sh",
+    function (exit, out, err)
+      print(exit, out, err)
+    end,
+    { path }
+  ):start()
 end
 
 local rules = {
@@ -134,42 +196,42 @@ local rules = {
     exec = nil,
   },
   {
-    patterns = {"^.*%.crdownload$", "^.*%.download$"},
+    patterns = {"%.crdownload$", "%.download$"},
     isRegex = true,
     exec = nil,
   },
   {
-    patterns = {"%.ics"},
+    patterns = {"%.ics$"},
     isRegex = true,
     exec = hs.open
   },
   {
-    patterns = {"%.heic", "%.webp"},
+    patterns = {"%.heic$", "%.webp$"},
     isRegex = true,
     exec = convertToJpg
   },
   {
-    patterns = {"%.jpeg"},
+    patterns = {"%.jpeg$"},
     isRegex = true,
     exec = renameJpegToJpg
   },
   {
-    patterns = {"%.zip"},
+    patterns = {"%.zip$"},
     isRegex = true,
     exec = handleZip
   },
   {
-    patterns = {"%.pdf"},
+    patterns = {"%.pdf$"},
     isRegex = true,
     exec = handlePdf
   },
   {
-    patterns = {"%.tgz", "%.gz"},
+    patterns = {"%.tgz$", "%.gz$"},
     isRegex = true,
     exec = handleGz
   },
   {
-    patterns = { "%.dmg" },
+    patterns = {"%.dmg$"},
     isRegex = true,
     exec = handleDmg
   }
