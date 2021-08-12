@@ -62,8 +62,8 @@ function obj:start()
     if not slider then
       return
     end
-    observer = Observer.new(app:pid()):addWatcher(slider, "AXUIElementDestroyed"):callback(observerCallback):start()
     modal:enter()
+    observer = Observer.new(app:pid()):addWatcher(axApp, "AXUIElementDestroyed"):callback(observerCallback):start()
   end)
   return self
 end
