@@ -246,7 +246,7 @@ local function shouldProcessFile(_rules, fileName)
     for _, setting in ipairs(_rules) do
         for _, pattern in ipairs(setting.patterns) do
           if setting.isRegex then
-            if string.find(fileName, pattern) then
+            if string.find(string.lower(fileName), pattern) then
               functionToExecute = setting.exec
               break
             end
@@ -294,8 +294,6 @@ local function watcherCallback()
 
   -- process the files
   for _, file in ipairs(filesPendingProcessing) do
-    -- spoon.StatusBar:addTask()
-    -- Task.new(shellScript, shellCallback, {file}):start()
     file.exec(file.path)
   end
 end

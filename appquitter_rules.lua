@@ -90,7 +90,7 @@ return {
   ["at.obdev.LaunchBar.ActionEditor"] = {quit = 0.5},
   ["com.apple.iphonesimulator"] = {quit = 1},
   ["com.latenightsw.ScriptDebugger7"] = {quit = 1},
-  ["com.kapeli.dashdoc"] = {quit = 8, hide = 1},
+  ["com.kapeli.dashdoc"] = {quit = 24, hide = 1},
   ["com.microsoft.VSCode"] = { quit = 8, hide = 1 },
   ["com.apple.dt.Xcode"] = { quit = 8, hide = 1 },
   ["com.toggl.toggldesktop.TogglDesktop"] = {quit = 8, hide = 0.1},
