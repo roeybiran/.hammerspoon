@@ -43,12 +43,12 @@ local function toggleBraveAsDefaultBrowserOnItsLaunch(event, bundleID)
   end
   hs.settings.set("RBDefaultURLHandler", newBrowser)
   print(">>> default browser is now: " .. newBrowser)
-  spoon.URLDispatcher.default_handler = newBrowser
+  -- spoon.URLDispatcher.default_handler = newBrowser
 end
 
 hs.loadSpoon("URLDispatcher"):start()
 local defaultUrlHandler = hs.settings.get("RBDefaultURLHandler") or "com.apple.Safari"
-toggleBraveAsDefaultBrowserOnItsLaunch(Application.watcher.launched, defaultUrlHandler)
+-- toggleBraveAsDefaultBrowserOnItsLaunch(Application.watcher.launched, defaultUrlHandler)
 
 local function enterAppEnvironment(appObj, bundleID)
   for key, value in pairs(appModals) do
@@ -69,6 +69,7 @@ local function appWatcherCallback(_, event, appObj)
     end
     frontAppBundleID = newBundleID
     enterAppEnvironment(appObj, newBundleID)
+    -- print(newBundleID)
 
     obj.currentBundleID = newBundleID
     DistributedNotifications.post("ApplicationActivated", nil, {

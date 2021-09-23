@@ -86,6 +86,7 @@ return {
   "us.zoom.xos",
   "abnerworks.Typora",
   "com.brave.Browser",
+  "com.sindresorhus.Color-Picker",
   ["at.obdev.LaunchBar.ActionEditor"] = {quit = 0.5},
   ["com.apple.iphonesimulator"] = {quit = 1},
   ["com.latenightsw.ScriptDebugger7"] = {quit = 1},

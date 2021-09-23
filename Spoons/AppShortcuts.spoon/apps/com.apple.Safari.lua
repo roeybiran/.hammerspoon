@@ -18,7 +18,8 @@ end
 
 local obj = {}
 local _appObj = nil
-local _observer = nil
+local windowTitleObserver = nil
+local focusedElementObserver = nil
 local layoutsPerURLKey = "RBSafariLayoutsForURL"
 local notficationObserver = nil
 
@@ -83,15 +84,6 @@ local function isSafariAddressBarFocused(appObj)
       end
     end
   end
-end
-
-local function changeToABCAfterFocusingAddressBar(modal, keystroke)
-  if KeyCodes.currentLayout() == "Hebrew" then
-    KeyCodes.setLayout("ABC")
-  end
-  modal:exit()
-  EventTap.keyStroke(table.unpack(keystroke))
-  modal:enter()
 end
 
 local function moveFocusToMainAreaAndChangeToABCAfterOpeningLocation(appObj, modal, keystroke)
@@ -230,21 +222,16 @@ end
 
 local function getCurrentURL()
   -- AppleScript method
-  local _, currentURL, _ = AppleScript [[
-  tell application "Safari"
-  tell window 1
-  return URL of current tab
-end tell
-end tell]]
-if not currentURL then
-  return
-end
-currentURL = currentURL:gsub("^.+://", "")
-local lastSlash = currentURL:find("/")
-if lastSlash then
-  currentURL = currentURL:sub(1, lastSlash - 1)
-end
-return currentURL
+  local _, currentURL, _ = AppleScript'tell application "Safari" to tell window 1 to return URL of current tab'
+  if not currentURL then
+    return
+  end
+  currentURL = currentURL:gsub("^.+://", "")
+  local lastSlash = currentURL:find("/")
+  if lastSlash then
+    currentURL = currentURL:sub(1, lastSlash - 1)
+  end
+  return currentURL
 end
 
 local function onReceiveInputSourceChangeNotification()
@@ -271,9 +258,32 @@ local function onTitleChangeObserverCallback(_, _, _, _)
   KeyCodes.setLayout(newLayout)
 end
 
+-- local function changeToABCAfterFocusingAddressBar(modal, keystroke)
+--   if KeyCodes.currentLayout() == "Hebrew" then
+--     KeyCodes.setLayout("ABC")
+--   end
+--   modal:exit()
+--   EventTap.keyStroke(table.unpack(keystroke))
+--   modal:enter()
+-- end
+
+local function setupFocusObserver(appObj)
+  local pid = appObj:pid()
+  focusedElementObserver = Observer.new(pid)
+  local element = AX.applicationElement(appObj)
+  if not element:asHSApplication() then return end
+  focusedElementObserver:addWatcher(element, "AXFocusedUIElementChanged")
+  focusedElementObserver:callback(function (_, uielement, _, _)
+    if KeyCodes.currentLayout() == "Hebrew" and element:attributeValue("AXFocusedUIElement"):attributeValue("AXIdentifier") == "WEB_BROWSER_ADDRESS_AND_SEARCH_FIELD" then
+      KeyCodes.setLayout("ABC")
+    end
+  end)
+  focusedElementObserver:start()
+end
+
 local function setupTitleChangeObserver(appObj)
   local pid = appObj:pid()
-  _observer = Observer.new(pid)
+  windowTitleObserver = Observer.new(pid)
   local element = AX.applicationElement(appObj)
   -- if Safari has just been launched, this may return "*accessibility error* (0x60000104cbf8)"
   -- this value is not nil so we need to check by casting
@@ -286,9 +296,9 @@ local function setupTitleChangeObserver(appObj)
     end)
     return
   end
-  _observer:addWatcher(element, "AXTitleChanged")
-  _observer:callback(onTitleChangeObserverCallback)
-  _observer:start()
+  windowTitleObserver:addWatcher(element, "AXTitleChanged")
+  windowTitleObserver:callback(onTitleChangeObserverCallback)
+  windowTitleObserver:start()
 end
 
 obj.modal = nil
@@ -330,26 +340,26 @@ obj.actions = {
     hotkey = {"ctrl", "p"}
   },
   --- moveFocusToMainAreaAndChangeToABCAfterOpeningLocation - unfocuses the address bar (if focused) after loading a web page. Useful when using Vimari's hints feature, which doesn't work with the address bar focused.
-  moveFocusToMainAreaAndChangeToABCAfterOpeningLocation = {
-    action = function()
-      moveFocusToMainAreaAndChangeToABCAfterOpeningLocation(_appObj, obj.modal, {{}, "return"})
-    end,
-    hotkey = {{}, "return"}
-  },
+  -- moveFocusToMainAreaAndChangeToABCAfterOpeningLocation = {
+  --   action = function()
+  --     moveFocusToMainAreaAndChangeToABCAfterOpeningLocation(_appObj, obj.modal, {{}, "return"})
+  --   end,
+  --   hotkey = {{}, "return"}
+  -- },
   --- changeToABCAfterFocusingAddressBar - changes the active keyboard layout to ABC once the address bar has gained focus.
-  changeToABCAfterFocusingAddressBar = {
-    action = function()
-      changeToABCAfterFocusingAddressBar(obj.modal, {{"cmd"}, "l"})
-    end,
-    hotkey = {"cmd", "l"}
-  },
+  -- changeToABCAfterFocusingAddressBar = {
+  --   action = function()
+  --     changeToABCAfterFocusingAddressBar(obj.modal, {{"cmd"}, "l"})
+  --   end,
+  --   hotkey = {"cmd", "l"}
+  -- },
   --- TODO
-  changeToABCAfterOpeningNewTab = {
-    action = function()
-      changeToABCAfterFocusingAddressBar(obj.modal, {{"cmd"}, "t"})
-    end,
-    hotkey = {"cmd", "t"}
-  },
+  -- changeToABCAfterOpeningNewTab = {
+  --   action = function()
+  --     changeToABCAfterFocusingAddressBar(obj.modal, {{"cmd"}, "t"})
+  --   end,
+  --   hotkey = {"cmd", "t"}
+  -- },
   --- newBookmarksFolder - creates a new bookmarks folder. Works only while viewing bookmarks.
   newBookmarksFolder = {
     action = function()
@@ -374,27 +384,31 @@ obj.actions = {
 }
 
 function obj:start(appObj)
-  if not notficationObserver then
-    notficationObserver = DistributedNotifications.new(onReceiveInputSourceChangeNotification,
-    "InputSourceDidChange")
-  end
-  notficationObserver:start()
   _appObj = appObj
   obj.modal:enter()
+
+  if not notficationObserver then
+    notficationObserver = DistributedNotifications.new(onReceiveInputSourceChangeNotification, "InputSourceDidChange")
+  end
+  notficationObserver:start()
+
   setupTitleChangeObserver(appObj)
   onTitleChangeObserverCallback()
+  setupFocusObserver(appObj)
+
   return self
 end
 
 function obj:stop()
-  if notficationObserver then
-    notficationObserver:stop()
+
+  for _, obs in ipairs({notficationObserver, windowTitleObserver, focusedElementObserver}) do
+    if obs then
+      obs:stop()
+    end
   end
   obj.modal:exit()
-  if _observer then
-    _observer:stop()
-    _observer = nil
-  end
+
+
   return self
 end
 
