@@ -10,14 +10,13 @@ Personal [Hammerspoon](https://github.com/Hammerspoon/hammerspoon) config.
 
 ## Notes
 
-- Works best with v0.9.79 or newer.
+- Requires Hammerspoon v0.9.79 or newer.
 - The `rb` folder included with this repo contains dependencies for some Spoons. It's required.
 
 ## To Do
 
-## What's New
-
-- Massive general cleanup and dead code removal.
+- Organize dependencies in Spoons.
+- Documentation and API for the app-specific Spoons.
 
 ## API
 
@@ -472,8 +471,3 @@ This module offers the following functionalities:
 - `newBookmarksFolder` - creates a new bookmarks folder. Works only while viewing bookmarks.
 - `rightSizeBookmarksOrHistoryColumn` - sizes to fit the first column of the bookmarks/history view.
 - `firstSearchResult` - in a history/bookmarks view and when the search field is focused, moves focus the 1st search result.
-
-## To Do
-
-- Organize dependencies in Spoons.
-- Documentation and API for the app-specific Spoons.
