@@ -26,7 +26,6 @@ local TIMERS_PLIST_PATH = os.getenv("HOME") .. "/Library/Preferences/com.rb.hs.a
 local appWatcher = nil
 
 function obj.log()
-  -- spoon.AppQuitter.log()
   print"AppQuitter log:"
   for line in io.lines(os.getenv("HOME") .. "/Library/Logs/com.rb.hs.appquitter.errors.log") do
     print(line)

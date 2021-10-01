@@ -8,12 +8,16 @@ local FS = require("hs.fs")
 local Application = require("hs.application")
 local Window = require("hs.window")
 local Spoons = require("hs.spoons")
-local DistributedNotifications = require("hs.distributednotifications")
 local Hotkey = require("hs.hotkey")
 
 local appScriptsDir = Spoons.resourcePath("apps/")
 
 local obj = {}
+local _watcher = nil
+local frontAppBundleID = nil
+local windowFilter = nil
+local appModals = {}
+
 obj.__index = obj
 obj.name = "ApplicationModalManager"
 obj.version = "1.0"
@@ -21,13 +25,23 @@ obj.author = "roeybiran <roeybiran@icloud.com>"
 obj.homepage = "https://github.com/Hammerspoon/spoons"
 obj.license = "MIT - https://opensource.org/licenses/MIT"
 
-local _watcher = nil
-local frontAppBundleID = nil
-local windowFilter = nil
-local appModals = {}
-
 obj.currentBundleID = nil
 obj.currentAppObj = nil
+
+--- AppWatcher.transientApps
+---
+--- Variable
+---
+--- A table containing apps you consider to be transient and want to be taken into account by the window filter.
+--- Elements should have the same structure as the `filters` parameter of hs.window.filter `setFilters` method.
+obj.transientApps = {
+  ["LaunchBar"] = {allowRoles = "AXSystemDialog"},
+  ["1Password 7"] = {allowTitles = "1Password mini"},
+  ["Spotlight"] = {allowRoles = "AXSystemDialog"},
+  ["Paletro"] = {allowRoles = "AXSystemDialog"},
+  ["Contexts"] = false,
+  ["Emoji & Symbols"] = true
+}
 
 local function enterAppEnvironment(appObj, bundleID)
     for key, value in pairs(appModals) do
@@ -45,40 +59,23 @@ local function appWatcherCallback(_, event, appObj)
         if newBundleID == frontAppBundleID then return end
         frontAppBundleID = newBundleID
         enterAppEnvironment(appObj, newBundleID)
-
         obj.currentBundleID = newBundleID
-        DistributedNotifications.post("ApplicationActivated", nil,
-                                      {bundle = newBundleID})
     end
 end
 
-local function windowFilterCallback(hsWindow, _, event)
-    -- second arg is the app's name
+local function windowFilterCallback(hsWindow, appName, event)
     local appObj = hsWindow:application()
     if not appObj then return end
     local bundleID = appObj:bundleID()
     if event == "windowFocused" or event == "windowCreated" then
-        if bundleID == frontAppBundleID then return end
+        if bundleID == frontAppBundleID then
+          return
+        end
         appWatcherCallback(nil, "FROM_WINDOW_WATCHER", appObj)
     elseif event == "windowDestroyed" then
-        appWatcherCallback(nil, Application.watcher.activated,
-                           Application.frontmostApplication())
+        appWatcherCallback(nil, Application.watcher.activated, Application.frontmostApplication())
     end
 end
-
---- AppWatcher.transientApps
----
---- Variable
----
---- A table containing apps you consider to be transient and want to be taken into account by the window filter. Elements should have the same structure as the `filters` parameter of hs.window.filter `setFilters` method.
-obj.transientApps = {
-    ["LaunchBar"] = {allowRoles = "AXSystemDialog"},
-    ["1Password 7"] = {allowTitles = "1Password mini"},
-    ["Spotlight"] = {allowRoles = "AXSystemDialog"},
-    ["Paletro"] = {allowRoles = "AXSystemDialog"},
-    ["Contexts"] = false,
-    ["Emoji & Symbols"] = true
-}
 
 --- AppWatcher.stop()
 ---

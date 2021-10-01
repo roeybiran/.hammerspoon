@@ -4,7 +4,7 @@ local obj = {}
 local _appObj = nil
 
 local function searchNotesWithLaunchBar()
-  osascript.applescript("tell app \"LaunchBar\" to perform action \"Notes: Search\"")
+  osascript.applescript('tell app "LaunchBar" to perform action "Notes: Search"')
 end
 
 obj.modal = nil

@@ -11,7 +11,9 @@ local Settings = require("hs.settings")
 local Spoons = require("hs.spoons")
 local FNUtils = require("hs.fnutils")
 local Window = require("hs.window")
+local Application  = require("hs.application")
 local DistributedNotifications = require("hs.distributednotifications")
+
 local spoon = spoon
 
 local obj = {}
@@ -23,7 +25,6 @@ obj.author = "roeybiran <roeybiran@icloud.com>"
 obj.homepage = "https://github.com/Hammerspoon/Spoons"
 obj.license = "MIT - https://opensource.org/licenses/MIT"
 
-local notificationWatcher = nil
 local avoidSwitchingInputSourceOnActivation = {"at.obdev.LaunchBar", "com.contextsformac.Contexts", "com.apple.Safari"}
 
 -- called when the key to toggle the layout is pressed
@@ -40,19 +41,24 @@ local function setInputSourceOnKeyDown()
 
     local settingsTable = Settings.get("RBAppsLastActiveKeyboardLayouts") or {}
     settingsTable[bundleID] = {
-        ["LastActiveKeyboardLayout"] = newLayout,
-        ["LastActiveKeyboardLayoutTimestamp"] = os.time()
+      ["LastActiveKeyboardLayoutTimestamp"] = os.time(),
+      ["LastActiveKeyboardLayout"] = newLayout,
     }
+
     Settings.set("RBAppsLastActiveKeyboardLayouts", settingsTable)
 end
 
-local function setInputSourceOnAppActivation(bundleID)
+local function setInputSourceOnAppActivation(appName, event, app)
+    if event ~= Application.watcher.activated then return end;
+
+    local bundleID = app:bundleID()
     if FNUtils.contains(avoidSwitchingInputSourceOnActivation, bundleID) then
         return
     end
+
     -- default to abc if no saved setting
     local newLayout = "ABC"
-    -- special handling for safari
+
     local settingsTable = Settings.get("RBAppsLastActiveKeyboardLayouts") or {}
     local oldSetting = settingsTable[bundleID]
     if oldSetting then
@@ -84,18 +90,11 @@ function obj:bindHotKeys(_mapping)
 end
 
 function obj:start()
-    notificationWatcher:start()
     return self
 end
 
 function obj:init()
-    notificationWatcher = DistributedNotifications.new(function()
-        local newApp = spoon.AppShortcuts.currentBundleID
-        if newApp then
-            setInputSourceOnAppActivation(newApp)
-        end
-    end, "ApplicationActivated")
-    return self
+  Application.watcher.new(setInputSourceOnAppActivation):start()
 end
 
 return obj

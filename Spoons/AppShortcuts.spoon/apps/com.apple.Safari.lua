@@ -62,15 +62,19 @@ local function moveFocusToMainArea(appObj, includeSidebar)
     elseif bookmarksOrHistory then
         targetPane = bookmarksOrHistory
     end
-    targetPane:setAttributeValue("AXFocused", true)
+
+    if targetPane then targetPane:setAttributeValue("AXFocused", true) end
 end
 
 local function isSafariAddressBarFocused(appObj)
     local axAppObj = AX.applicationElement(appObj)
     local addressBarObject = UI.getUIElement(axAppObj, {
         {"AXWindow", "AXMain", true}, {"AXToolbar", 1}
-    }):attributeValue("AXChildren")
-    for _, toolbarObject in ipairs(addressBarObject) do
+    })
+    local addressBarChildren = (addressBarObject and
+                                   addressBarObject:attributeValue("AXChildren")) or
+                                   {}
+    for _, toolbarObject in ipairs(addressBarChildren) do
         local toolbarObjectsChilds = toolbarObject:attributeValue("AXChildren")
         if toolbarObjectsChilds then
             for _, toolbarObjectChild in ipairs(toolbarObjectsChilds) do
@@ -82,9 +86,6 @@ local function isSafariAddressBarFocused(appObj)
         end
     end
 end
-
--- unfocuses the address bar (if focused) after loading a web page. Useful when using Vimari's hints feature, which doesn't work with the address bar focused.
--- in my experience, the address bar remains focused only after searching in Google
 
 local function pageNavigation(direction)
     local jsFile = script_path() .. "/helpers/navigatePages.js"
@@ -211,7 +212,8 @@ local function onTitleChangeObserverCallback(_, _, _, _)
     if urlSetting then newLayout = urlSetting end
     KeyCodes.setLayout(newLayout)
 
-    -- unfocuses the address bar (if focused) after loading a web page. Useful when using Vimari's hints feature, which don't work with the address bar focused.
+    -- unfocuses the address bar (if focused) after loading a web page.
+    -- Useful when using Vimari's hints feature, which don't work with the address bar focused.
     -- in my experience, the address bar remains focused only after searching in Google
     local isFocused = isSafariAddressBarFocused(_appObj)
     -- if the address bar wasn't focused, it's a regular return press. bail out
@@ -223,16 +225,24 @@ local function setupAddressBarFocusObserver(appObj)
     local pid = appObj:pid()
     focusedElementObserver = Observer.new(pid)
     local element = AX.applicationElement(appObj)
-    if not element:asHSApplication() then return end
+    -- if not element:asHSApplication() then return end
+    if not element:isValid() then return end
     focusedElementObserver:addWatcher(element, "AXFocusedUIElementChanged")
-    focusedElementObserver:callback(function(_, uielement, _, _)
-        if KeyCodes.currentLayout() == "Hebrew" and
-            element:attributeValue("AXFocusedUIElement")
-                :attributeValue("AXIdentifier") ==
-            "WEB_BROWSER_ADDRESS_AND_SEARCH_FIELD" then
-            KeyCodes.setLayout("ABC")
-        end
-    end)
+        :callback(function(_, uielement, _, _)
+
+            if KeyCodes.currentLayout() ~= "Hebrew" then return end
+
+            local path = uielement:path()
+            local app = path and path[1]
+            local focusedElement =
+                app and app:attributeValue("AXFocusedUIElement")
+            local identifier = focusedElement and
+                                   focusedElement:attributeValue("AXIdentifier")
+
+            if identifier == "WEB_BROWSER_ADDRESS_AND_SEARCH_FIELD" then
+                KeyCodes.setLayout("ABC")
+            end
+        end)
     focusedElementObserver:start()
 end
 
@@ -252,9 +262,8 @@ local function setupTitleChangeObserver(appObj)
         end)
         return
     end
-    windowTitleObserver:addWatcher(element, "AXTitleChanged")
-    windowTitleObserver:callback(onTitleChangeObserverCallback)
-    windowTitleObserver:start()
+    windowTitleObserver:addWatcher(element, "AXTitleChanged"):callback(
+        onTitleChangeObserverCallback):start()
 end
 
 obj.modal = nil
@@ -295,7 +304,7 @@ obj.actions = {
     --- rightSizeBookmarksOrHistoryColumn - sizes to fit the first column of the bookmarks/history view.
     rightSizeBookmarksOrHistoryColumn = {
         action = function() rightSizeBookmarksOrHistoryColumn(_appObj) end,
-        hotkey = {"alt", "r"}
+        hotkey = {'alt', "r"}
     },
     --- firstSearchResult - in a history/bookmarks view and when the search field is focused, moves focus the 1st search result.
     firstSearchResult = {
@@ -310,7 +319,7 @@ function obj:start(appObj)
 
     if not notficationObserver then
         notficationObserver = DistributedNotifications.new(
-                                  onReceiveInputSourceChangeNotification,
+                                    onReceiveInputSourceChangeNotification,
                                   "InputSourceDidChange")
     end
     notficationObserver:start()
@@ -323,12 +332,10 @@ function obj:start(appObj)
 end
 
 function obj:stop()
-
     for _, obs in ipairs({
         notficationObserver, windowTitleObserver, focusedElementObserver
     }) do if obs then obs:stop() end end
     obj.modal:exit()
-
     return self
 end
 
