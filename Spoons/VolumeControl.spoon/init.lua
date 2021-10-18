@@ -40,9 +40,7 @@ local function observerCallback()
 end
 
 --- VolumeControl:start()
----
 --- Method
----
 --- Activates the modules and enters the  modal. The following hotkeys/functionalities are available:
 ---   * →: increase volume by a level.
 ---   * ←: decrease volume by a level.
@@ -51,7 +49,6 @@ end
 ---   * ⌥→: set volume to 100.
 ---   * ⌥←: set volume to 0.
 ---   * escape: close the volume menu and exit the modal (the modal will be exited anyway as soon as the volume menu is closed).
----
 function obj:start()
   local app = Application("Control Center")
   local axApp = AX.applicationElement(app)

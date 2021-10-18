@@ -30,74 +30,8 @@ local current = "regular"
 local flashingIconTimer
 local taskQueue = 0
 
-local function caffeinateMenu()
-
-  local title = "Start"
-  local action = function()
-  end
-
-  -- local action = function()
-  --   beginSession()
-  -- end
-  -- if isCaffeineSessionRunning() then
-  --   title = "Stop"
-  --   action = function()
-  --     endSession()
-  --   end
-  -- end
-
-  local DURATIONS = {10, 8, 6, 4, 2, 1} -- order matters
-
-  local menu = {
-    {
-      title = "Start",
-      fn = function()
-        spoon.WIP_Caffeinate:start()
-      end,
-    },
-    {
-      title = "Stop",
-      fn = function()
-        spoon.WIP_Caffeinate:stop()
-      end,
-    },
-    {title = "-"},
-    {title = "-"},
-    {
-      title = "Allow Display Sleep",
-      -- checked = settings.get(displaySleepAllowedKey),
-      -- fn = function()
-      --   settings.set(displaySleepAllowedKey, (not settings.get(displaySleepAllowedKey)))
-      --   if isCaffeineSessionRunning() then
-      --     endSession()
-      --     beginSession()
-      --   end
-      -- end,
-    },
-    {title = "-"},
-  }
-
-  for _, dur in ipairs(DURATIONS) do
-    table.insert(menu, 3, {
-      title = string.format("Run for %s hours", dur),
-      fn = function()
-        -- beginSession(tonumber(dur))
-      end,
-    })
-  end
-  return menu
-
-end
-
--- TODO: move to a module
-Window.highlight.ui.overlayColor = {0, 0, 0, 0}
-Window.highlight.ui.frameWidth = 10
-Window.highlight.ui.overlay = true
-
 local function mainMenu()
   return {
-    {title = "Caffeinate", menu = caffeinateMenu()},
-    {title = "-"},
     {
       title = "Turn On Window Highlighting",
       fn = function()
@@ -144,12 +78,12 @@ end
 
 -- StatusBar.menuTable
 -- Variable
--- **TODO**
+-- TODO
 obj.menuTable = nil
 
 -- StatusBar:addTask()
 -- Method
--- **TODO**
+-- TODO
 function obj:addTask()
   if not flashingIconTimer:running() then
     flashingIconTimer:start()
@@ -160,7 +94,7 @@ end
 
 -- StatusBar:removeTask()
 -- Method
--- **TODO**
+-- TODO
 function obj:removeTask()
   taskQueue = taskQueue - 1
   if taskQueue < 1 then

@@ -71,16 +71,13 @@ local function isSafariAddressBarFocused(appObj)
     local addressBarObject = UI.getUIElement(axAppObj, {
         {"AXWindow", "AXMain", true}, {"AXToolbar", 1}
     })
-    local addressBarChildren = (addressBarObject and
-                                   addressBarObject:attributeValue("AXChildren")) or
-                                   {}
+    local addressBarChildren = (addressBarObject and addressBarObject:attributeValue("AXChildren")) or {}
     for _, toolbarObject in ipairs(addressBarChildren) do
         local toolbarObjectsChilds = toolbarObject:attributeValue("AXChildren")
         if toolbarObjectsChilds then
             for _, toolbarObjectChild in ipairs(toolbarObjectsChilds) do
                 if toolbarObjectChild:attributeValue("AXRole") == "AXTextField" then
-                    return (toolbarObjectChild:attributeValue("AXFocused") ==
-                               true)
+                    return toolbarObjectChild:attributeValue("AXFocused")
                 end
             end
         end
@@ -199,51 +196,47 @@ local function onReceiveInputSourceChangeNotification()
     Settings.set(layoutsPerURLKey, settingsTable)
 end
 
-local function onTitleChangeObserverCallback(_, _, _, _)
-    local url = getCurrentURL()
-    local special = {"bookmarks://", "history://", "favorites://"}
-    if FnUtils.contains(special, url) or url == "" or not url then
-        KeyCodes.setLayout("ABC")
-        return
-    end
-    local newLayout = "ABC"
-    local settingsTable = Settings.get(layoutsPerURLKey) or {}
-    local urlSetting = settingsTable[url]
-    if urlSetting then newLayout = urlSetting end
-    KeyCodes.setLayout(newLayout)
-
-    -- unfocuses the address bar (if focused) after loading a web page.
-    -- Useful when using Vimari's hints feature, which don't work with the address bar focused.
-    -- in my experience, the address bar remains focused only after searching in Google
-    local isFocused = isSafariAddressBarFocused(_appObj)
-    -- if the address bar wasn't focused, it's a regular return press. bail out
-    if not isFocused then return end
-    moveFocusToMainArea(_appObj, true)
-end
-
 local function setupAddressBarFocusObserver(appObj)
     local pid = appObj:pid()
     focusedElementObserver = Observer.new(pid)
     local element = AX.applicationElement(appObj)
     -- if not element:asHSApplication() then return end
     if not element:isValid() then return end
-    focusedElementObserver:addWatcher(element, "AXFocusedUIElementChanged")
-        :callback(function(_, uielement, _, _)
-
-            if KeyCodes.currentLayout() ~= "Hebrew" then return end
-
-            local path = uielement:path()
-            local app = path and path[1]
-            local focusedElement =
-                app and app:attributeValue("AXFocusedUIElement")
-            local identifier = focusedElement and
-                                   focusedElement:attributeValue("AXIdentifier")
-
-            if identifier == "WEB_BROWSER_ADDRESS_AND_SEARCH_FIELD" then
-                KeyCodes.setLayout("ABC")
-            end
+    focusedElementObserver
+      :addWatcher(element, "AXFocusedUIElementChanged")
+      :callback(function(_, uielement, _, _)
+          if KeyCodes.currentLayout() ~= "Hebrew" then return end
+          local path = uielement:path()
+          local app = path and path[1]
+          local focusedElement = app and app:attributeValue("AXFocusedUIElement")
+          local identifier = focusedElement and focusedElement:attributeValue("AXIdentifier")
+          if identifier == "WEB_BROWSER_ADDRESS_AND_SEARCH_FIELD" then
+              KeyCodes.setLayout("ABC")
+          end
         end)
-    focusedElementObserver:start()
+      :start()
+end
+
+local function onTitleChangeObserverCallback(_, _, _, _)
+  local url = getCurrentURL()
+  local special = {"bookmarks://", "history://", "favorites://"}
+  if FnUtils.contains(special, url) or url == "" or not url then
+      KeyCodes.setLayout("ABC")
+      return
+  end
+  local newLayout = "ABC"
+  local settingsTable = Settings.get(layoutsPerURLKey) or {}
+  local urlSetting = settingsTable[url]
+  if urlSetting then newLayout = urlSetting end
+  KeyCodes.setLayout(newLayout)
+
+  -- unfocuses the address bar (if focused) after loading a web page.
+  -- Useful when using Vimari's hints feature, which don't work with the address bar focused.
+  -- in my experience, the address bar remains focused only after searching in Google
+  -- if the address bar wasn't focused, it's a regular return press. bail out
+  local isFocused = isSafariAddressBarFocused(_appObj)
+  if not isFocused then return end
+  moveFocusToMainArea(_appObj, true)
 end
 
 local function setupTitleChangeObserver(appObj)
@@ -255,15 +248,16 @@ local function setupTitleChangeObserver(appObj)
     if not element:asHSApplication() then
         Timer.doAfter(0.5, function()
             if not element then
-                hs.showError(
-                    "AXUIElement still unavailable after delay. Consider increasing the delay's value")
+                hs.showError("AXUIElement still unavailable after delay. Consider increasing the delay's value")
             end
             setupTitleChangeObserver(_appObj)
         end)
         return
     end
-    windowTitleObserver:addWatcher(element, "AXTitleChanged"):callback(
-        onTitleChangeObserverCallback):start()
+    windowTitleObserver
+      :addWatcher(element, "AXTitleChanged")
+      :callback(onTitleChangeObserverCallback)
+      :start()
 end
 
 obj.modal = nil
@@ -318,9 +312,7 @@ function obj:start(appObj)
     obj.modal:enter()
 
     if not notficationObserver then
-        notficationObserver = DistributedNotifications.new(
-                                    onReceiveInputSourceChangeNotification,
-                                  "InputSourceDidChange")
+      notficationObserver = DistributedNotifications.new(onReceiveInputSourceChangeNotification, "InputSourceDidChange")
     end
     notficationObserver:start()
 
@@ -332,9 +324,9 @@ function obj:start(appObj)
 end
 
 function obj:stop()
-    for _, obs in ipairs({
-        notficationObserver, windowTitleObserver, focusedElementObserver
-    }) do if obs then obs:stop() end end
+    for _, obs in ipairs({notficationObserver, windowTitleObserver, focusedElementObserver}) do
+      if obs then obs:stop() end
+    end
     obj.modal:exit()
     return self
 end

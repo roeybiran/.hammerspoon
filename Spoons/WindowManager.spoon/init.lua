@@ -19,6 +19,38 @@ obj.author = "roeybiran <roeybiran@icloud.com>"
 obj.homepage = "https://github.com/Hammerspoon/Spoons"
 obj.license = "MIT - https://opensource.org/licenses/MIT"
 
+-- second window resize suggestion a-la Windows
+-- TODO
+-- obj.overlay = {
+--   fill = Drawing.rectangle({0, 0, 0, 0}):setLevel(Drawing.windowLevels["_MaximumWindowLevelKey"]):setFill(true):setFillColor(
+--     getSystemBlueColor()
+--   ):setAlpha(0.2):setRoundedRectRadii(3, 3),
+--   stroke = Drawing.rectangle({0, 0, 0, 0}):setLevel(Drawing.windowLevels["_MaximumWindowLevelKey"]):setFill(false):setStrokeWidth(
+--     15
+--   ):setStrokeColor(getSystemBlueColor()):setStroke(true):setRoundedRectRadii(3, 3),
+--   show = function(dimensions)
+--     for _, v in ipairs({obj.overlay.fill, obj.overlay.stroke}) do
+--       if v and v.hide then
+--         v:setFrame(dimensions):show(0.2)
+--       end
+--     end
+--   end,
+--   hide = function()
+--     for _, v in ipairs({obj.overlay.fill, obj.overlay.stroke}) do
+--       if v and v.hide then
+--         v:setFrame({0, 0, 0, 0}):hide(0.2)
+--       end
+--     end
+--   end
+-- }
+-- local function getSystemBlueColor()
+--   return Drawing.color.lists()["System"]["systemBlueColor"]
+-- end
+-- print("Entering transient mode...")
+-- hs.timer.doAfter(0.5, function() tabBind:disable() end)
+-- end
+
+
 local mainScreen = Screen.mainScreen()
 local usableFrame = mainScreen:frame()
 local menuBarHeight = mainScreen:fullFrame().h - usableFrame.h
@@ -126,9 +158,7 @@ end
 local function center() Window.frontmostWindow():centerOnScreen() end
 
 --- WindowManager:bindHotKeys(_mapping)
----
 --- Method
----
 --- This module offers the following functionalities:
 ---   * `maximize` - maximizes the frontmost window. If it's already maximized, it will be centered and resized to be a quarter of the screen.
 ---   * `pushLeft` - moves and/or resizes a window towards the left of the screen.
@@ -137,11 +167,8 @@ local function center() Window.frontmostWindow():centerOnScreen() end
 ---   * `pushUp` - moves and/or resizes a window towards the top of the screen.
 ---   * `pushLeft` - moves and/or resizes a window towards the left of the screen.
 ---   * `center` - centers the frontmost window.
----
 --- Parameters:
----
 ---   * `_mapping` - A table that conforms to the structure described in the Spoon plugin documentation.
----
 function obj:bindHotKeys(_mapping)
   local def = {
     maximize = function() maximize() end,
@@ -155,34 +182,3 @@ function obj:bindHotKeys(_mapping)
 end
 
 return obj
-
--- obj.overlay = {
---   fill = Drawing.rectangle({0, 0, 0, 0}):setLevel(Drawing.windowLevels["_MaximumWindowLevelKey"]):setFill(true):setFillColor(
---     getSystemBlueColor()
---   ):setAlpha(0.2):setRoundedRectRadii(3, 3),
---   stroke = Drawing.rectangle({0, 0, 0, 0}):setLevel(Drawing.windowLevels["_MaximumWindowLevelKey"]):setFill(false):setStrokeWidth(
---     15
---   ):setStrokeColor(getSystemBlueColor()):setStroke(true):setRoundedRectRadii(3, 3),
---   show = function(dimensions)
---     for _, v in ipairs({obj.overlay.fill, obj.overlay.stroke}) do
---       if v and v.hide then
---         v:setFrame(dimensions):show(0.2)
---       end
---     end
---   end,
---   hide = function()
---     for _, v in ipairs({obj.overlay.fill, obj.overlay.stroke}) do
---       if v and v.hide then
---         v:setFrame({0, 0, 0, 0}):hide(0.2)
---       end
---     end
---   end
--- }
-
--- local function getSystemBlueColor()
---   return Drawing.color.lists()["System"]["systemBlueColor"]
--- end
-
--- print("Entering transient mode...")
--- hs.timer.doAfter(0.5, function() tabBind:disable() end)
--- end

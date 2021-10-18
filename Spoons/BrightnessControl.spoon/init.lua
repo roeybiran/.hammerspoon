@@ -30,36 +30,26 @@ local function decreaseBrightness()
 end
 
 --- BrightnessControl:start()
----
 --- Method
----
 --- Starts the module.
----
 function obj.start()
   brightnessControlModal:enter()
 end
 
 --- BrightnessControl:stop()
----
 --- Method
----
 --- Stops the module. Bound to the escape and return keys.
----
 function obj.stop()
   brightnessControlModal:exit()
 end
 
 --- BrightnessControl.increaseBrightnessKey
----
 --- Variable
----
 --- A hotkey that increases brightness. It's a table that must include 2 keys, "mods" and "key", each must be of the same type as the first 2 parameters to the `hs.hotkey.bind` method. Defaults to →.
 obj.increaseBrightnessKey = {mods = {}, key = "right"}
 
 --- BrightnessControl.decreaseBrightnessKey
----
 --- Variable
----
 --- A hotkey that decreases brightness. It's a table that must include 2 keys, "mods" and "key", each must be of the same type as the first 2 parameters to the `hs.hotkey.bind` method. Defaults to ←.
 obj.decreaseBrightnessKey = {mods = {}, key = "left"}
 

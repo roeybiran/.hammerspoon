@@ -29,18 +29,13 @@ local function focusDock()
 end
 
 --- Globals:bindHotKeys(_mapping)
----
 --- Method
----
 --- This module offers the following functionalities:
 ---   * rightClick - simulates a control-click on the currently focused UI element.
 ---   * focusMenuBar - clicks the menu bar item that immediately follows the  menu bar item.
 ---   * focusDock - shows the system-wide dock.
----
 --- Parameters:
----
 ---   * `_mapping` - A table that conforms to the structure described in the Spoon plugin documentation.
----
 function obj:bindHotKeys(_mapping)
     local def = {
         rightClick = function()

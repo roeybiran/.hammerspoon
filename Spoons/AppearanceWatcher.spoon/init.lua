@@ -29,15 +29,12 @@ local function setStyle()
   local currentSystemStyle = Host.interfaceStyle() or "Light"
   local cachedStyle = settings.get(cachedInterfaceStyleKey)
   if currentSystemStyle ~= cachedStyle then
-    local msg = string.format("AppearanceWatcher: detected a system style change, from %s to %s", cachedStyle,
-                              currentSystemStyle)
+    local msg = string.format("AppearanceWatcher: detected a system style change, from %s to %s", cachedStyle, currentSystemStyle)
     print(msg)
     settings.set(cachedInterfaceStyleKey, currentSystemStyle)
     task.new(script_path() .. "/appearance.sh", function(exitCode, stdOut, stdErr)
       if exitCode > 0 then
-        msg = string.format(
-                  [[AppearanceWatcher: appearance.sh exited with non-zero exit code (%s). stdout: %s, stderr: %s]],
-                  exitCode, stdOut, stdErr)
+        msg = string.format([[AppearanceWatcher: appearance.sh exited with non-zero exit code (%s). stdout: %s, stderr: %s]], exitCode, stdOut, stdErr)
         print(msg)
       end
     end, {currentSystemStyle:lower()}):start()
@@ -55,11 +52,8 @@ function obj:init()
 end
 
 --- AppearanceWatcher:stop()
----
 --- Method
----
 --- Stops this module.
----
 function obj:stop()
   watcher:stop()
   watcher = nil
@@ -67,11 +61,8 @@ function obj:stop()
 end
 
 --- AppearanceWatcher:start()
----
 --- Method
----
 --- starts this module.
----
 function obj:start()
   watcher = PathWatcher.new(appearancePlist, function()
     setStyle()
@@ -81,11 +72,8 @@ function obj:start()
 end
 
 --- AppearanceWatcher:toggle()
----
 --- Method
----
 --- Toggles this module.
----
 function obj:toggle()
   if obj:isActive() then
     settings.set(appearanceWatcherActiveKey, false)
@@ -98,15 +86,11 @@ function obj:toggle()
 end
 
 --- AppearanceWatcher:isActive()
----
 --- Method
----
 --- Determines whether module is active.
 ---
 --- Returns:
----
 ---  * A boolean, true if the module's watcher is active, otherwise false
----
 function obj.isActive()
   return watcher ~= nil
 end

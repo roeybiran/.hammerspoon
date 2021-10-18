@@ -97,18 +97,13 @@ local function clickButton(theButton)
 end
 
 --- NotificationCenter:bindHotkeys(_mapping)
----
 --- Method
----
 --- Bind hotkeys for this module. The `_mapping` table keys correspond to the following functionalities:
 --- * `firstButton` - clicks on the first (or only) button of a notification center banner. If banners are configured through system preferences to be transient, a mouse move operation will be performed first to try and reveal the button, should it exists.
 --- * `secondButton` - clicks on the second button of a notification center banner. If banners are configured through system preferences to be transient, a mouse move operation will be performed first to try and reveal the button, should it exists. If the button is in fact a menu button (that is, it offers a dropdown of additional options), revealing the menu will be favored over a simple click.
 --- * `toggle` - reveals the notification center itself (side bar). Once revealed, a second call of this function will switch between the panel's 2 different modes ("Today" and "Notifications"). Closing the panel could be done normally, e.g. by pressing escape.
----
 --- Parameters:
----
 ---  * `_mapping` - see the Spoon plugin documentation for the implementation.
----
 function obj:bindHotKeys(_mapping)
   local def = {
     firstButton = function() clickButton(1) end,

@@ -17,7 +17,7 @@ local DistributedNotifications = require("hs.distributednotifications")
 local spoon = spoon
 
 local obj = {}
-
+local watcher
 obj.__index = obj
 obj.name = "KeyboardLayoutManager"
 obj.version = "1.0"
@@ -25,7 +25,8 @@ obj.author = "roeybiran <roeybiran@icloud.com>"
 obj.homepage = "https://github.com/Hammerspoon/Spoons"
 obj.license = "MIT - https://opensource.org/licenses/MIT"
 
-local avoidSwitchingInputSourceOnActivation = {"at.obdev.LaunchBar", "com.contextsformac.Contexts", "com.apple.Safari"}
+local avoidSwitchingInputSourceOnActivation = {}
+local defaultsKey = "RBAppsLastActiveKeyboardLayouts"
 
 -- called when the key to toggle the layout is pressed
 local function setInputSourceOnKeyDown()
@@ -39,13 +40,13 @@ local function setInputSourceOnKeyDown()
     Keycodes.setLayout(newLayout)
     DistributedNotifications.post("InputSourceDidChange")
 
-    local settingsTable = Settings.get("RBAppsLastActiveKeyboardLayouts") or {}
+    local settingsTable = Settings.get(defaultsKey) or {}
     settingsTable[bundleID] = {
       ["LastActiveKeyboardLayoutTimestamp"] = os.time(),
       ["LastActiveKeyboardLayout"] = newLayout,
     }
 
-    Settings.set("RBAppsLastActiveKeyboardLayouts", settingsTable)
+    Settings.set(defaultsKey, settingsTable)
 end
 
 local function setInputSourceOnAppActivation(appName, event, app)
@@ -59,7 +60,7 @@ local function setInputSourceOnAppActivation(appName, event, app)
     -- default to abc if no saved setting
     local newLayout = "ABC"
 
-    local settingsTable = Settings.get("RBAppsLastActiveKeyboardLayouts") or {}
+    local settingsTable = Settings.get(defaultsKey) or {}
     local oldSetting = settingsTable[bundleID]
     if oldSetting then
         -- TODO: reset back to abc based on timestamp?
@@ -69,32 +70,34 @@ local function setInputSourceOnAppActivation(appName, event, app)
 end
 
 --- KeyboardLayoutManager:bindHotkeys(mapping)
----
 --- Method
----
 --- Binds hotkeys for this module
----
 --- Parameters:
----
 ---  * `mapping` - A table containing hotkey modifier/key details for the following items:
 ---   * `toggleInputSource` - switch between the "Hebrew" and "ABC" layouts.
----
 function obj:bindHotKeys(_mapping)
     local def = {
         toggleInputSource = function()
-            setInputSourceOnKeyDown()
+          setInputSourceOnKeyDown()
         end
     }
     Spoons.bindHotkeysToSpec(def, _mapping)
     return self
 end
 
-function obj:start()
-    return self
+--- KeyboardLayoutManager:start(ignored)
+--- Method
+--- Starts the module.
+--- Parameters:
+---  * `ignored` - A table of bundle IDs of apps for which layout switching should be avoided.
+function obj:start(ignored)
+  avoidSwitchingInputSourceOnActivation = ignored or {}
+  return self
 end
 
 function obj:init()
-  Application.watcher.new(setInputSourceOnAppActivation):start()
+  watcher = Application.watcher.new(setInputSourceOnAppActivation)
+  watcher:start()
 end
 
 return obj
