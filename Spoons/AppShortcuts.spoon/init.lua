@@ -39,7 +39,6 @@ end
 ---  * self, for method chaining.
 function obj:start(transientApps)
 		Watcher:start(transientApps, function (bundleId, appObj, isWinFilterEvent)
-			print(bundleId, appObj, isWinFilterEvent)
 			enterAppEnvironment(appObj, bundleId)
 		end)
     return self

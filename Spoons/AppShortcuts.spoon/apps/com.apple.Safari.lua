@@ -18,7 +18,7 @@ end
 
 local obj = {}
 local _appObj = nil
-local windowTitleObserver = nil
+local observer = nil
 local focusedElementObserver = nil
 local layoutsPerURLKey = "RBSafariLayoutsForURL"
 local notficationObserver = nil
@@ -126,7 +126,7 @@ local function rightSizeBookmarksOrHistoryColumn(appObj)
     })
     if not firstColumn then
         print(
-            "Safari/rightSizeBookmarksOrHistoryColumn: couldn't find the first column")
+            "Safari.rightSizeBookmarksOrHistoryColumn: couldn't find the first column")
         return
     end
     local frame = firstColumn:attributeValue("AXFrame")
@@ -196,68 +196,98 @@ local function onReceiveInputSourceChangeNotification()
     Settings.set(layoutsPerURLKey, settingsTable)
 end
 
+local function setupLoadCompleteObserver(appObj)
+	local pid = appObj:pid()
+	loadComplete = Observer.new(pid)
+	local element = AX.applicationElement(appObj)
+	if not element:isValid() then return end
+	focusedElementObserver
+		:addWatcher(element, "AXFocusedUIElementChanged")
+		:callback(function(_, uielement, _, _)
+				if KeyCodes.currentLayout() ~= "Hebrew" then return end
+				local path = uielement:path()
+				local app = path and path[1]
+				local focusedElement = app and app:attributeValue("AXFocusedUIElement")
+				local identifier = focusedElement and focusedElement:attributeValue("AXIdentifier")
+				if identifier == "WEB_BROWSER_ADDRESS_AND_SEARCH_FIELD" then
+						KeyCodes.setLayout("ABC")
+				end
+			end)
+		:start()
+end
+
+-- switches to ABC upon focusing the address bar
 local function setupAddressBarFocusObserver(appObj)
-    local pid = appObj:pid()
-    focusedElementObserver = Observer.new(pid)
-    local element = AX.applicationElement(appObj)
-    -- if not element:asHSApplication() then return end
-    if not element:isValid() then return end
-    focusedElementObserver
-      :addWatcher(element, "AXFocusedUIElementChanged")
-      :callback(function(_, uielement, _, _)
-          if KeyCodes.currentLayout() ~= "Hebrew" then return end
-          local path = uielement:path()
-          local app = path and path[1]
-          local focusedElement = app and app:attributeValue("AXFocusedUIElement")
-          local identifier = focusedElement and focusedElement:attributeValue("AXIdentifier")
-          if identifier == "WEB_BROWSER_ADDRESS_AND_SEARCH_FIELD" then
-              KeyCodes.setLayout("ABC")
-          end
-        end)
-      :start()
+	local pid = appObj:pid()
+	focusedElementObserver = Observer.new(pid)
+	local element = AX.applicationElement(appObj)
+	if not element:isValid() then return end
+	focusedElementObserver
+		:addWatcher(element, "AXFocusedUIElementChanged")
+		:callback(function(_, uielement, _, _)
+				if KeyCodes.currentLayout() ~= "Hebrew" then return end
+				local path = uielement:path()
+				local app = path and path[1]
+				local focusedElement = app and app:attributeValue("AXFocusedUIElement")
+				local identifier = focusedElement and focusedElement:attributeValue("AXIdentifier")
+				if identifier == "WEB_BROWSER_ADDRESS_AND_SEARCH_FIELD" then
+						KeyCodes.setLayout("ABC")
+				end
+			end)
+		:start()
 end
 
-local function onTitleChangeObserverCallback(_, _, _, _)
-  local url = getCurrentURL()
-  local special = {"bookmarks://", "history://", "favorites://"}
-  if FnUtils.contains(special, url) or url == "" or not url then
-      KeyCodes.setLayout("ABC")
-      return
-  end
-  local newLayout = "ABC"
-  local settingsTable = Settings.get(layoutsPerURLKey) or {}
-  local urlSetting = settingsTable[url]
-  if urlSetting then newLayout = urlSetting end
-  KeyCodes.setLayout(newLayout)
+local function observerCallback(observerObj, uiElement, notifName, moreInfo)
 
-  -- unfocuses the address bar (if focused) after loading a web page.
-  -- Useful when using Vimari's hints feature, which don't work with the address bar focused.
-  -- in my experience, the address bar remains focused only after searching in Google
-  -- if the address bar wasn't focused, it's a regular return press. bail out
-  local isFocused = isSafariAddressBarFocused(_appObj)
-  if not isFocused then return end
-  moveFocusToMainArea(_appObj, true)
+	if notifName == "AXFocusedUIElementChanged" then
+		if KeyCodes.currentLayout() ~= "Hebrew" then return end
+		local path = uiElement:path()
+		local app = path and path[1]
+		local focusedElement = app and app:attributeValue("AXFocusedUIElement")
+		local identifier = focusedElement and focusedElement:attributeValue("AXIdentifier")
+		if identifier == "WEB_BROWSER_ADDRESS_AND_SEARCH_FIELD" then
+				KeyCodes.setLayout("ABC")
+		end
+	end
+
+	if notifName == "AXTitleChanged" then
+		local url = getCurrentURL()
+		local special = {"bookmarks://", "history://", "favorites://"}
+		if FnUtils.contains(special, url) or url == "" or not url then
+				KeyCodes.setLayout("ABC")
+				return
+		end
+		local newLayout = "ABC"
+		local settingsTable = Settings.get(layoutsPerURLKey) or {}
+		local urlSetting = settingsTable[url]
+		if urlSetting then newLayout = urlSetting end
+		KeyCodes.setLayout(newLayout)
+	end
+
+	if notifName == 'AXLoadComplete' then
+		-- unfocuses the address bar (if focused) after loading a web page.
+		-- Useful when using Vimari's hints feature, which don't work with the address bar focused.
+		-- in my experience, the address bar remains focused only after searching in Google
+		-- if the address bar wasn't focused, it's a regular return press. bail out
+		local isFocused = isSafariAddressBarFocused(_appObj)
+		if not isFocused then return end
+		moveFocusToMainArea(_appObj, true)
+	end
 end
 
-local function setupTitleChangeObserver(appObj)
-    local pid = appObj:pid()
-    windowTitleObserver = Observer.new(pid)
-    local element = AX.applicationElement(appObj)
-    -- if Safari has just been launched, this may return "*accessibility error* (0x60000104cbf8)"
-    -- this value is not nil so we need to check by casting
-    if not element:asHSApplication() then
-        Timer.doAfter(0.5, function()
-            if not element then
-                hs.showError("AXUIElement still unavailable after delay. Consider increasing the delay's value")
-            end
-            setupTitleChangeObserver(_appObj)
-        end)
-        return
-    end
-    windowTitleObserver
-      :addWatcher(element, "AXTitleChanged")
-      :callback(onTitleChangeObserverCallback)
-      :start()
+local function setupObservers(appObj)
+	local pid = appObj:pid()
+	observer = Observer.new(pid)
+	local element = AX.applicationElement(appObj)
+	-- if Safari has just been launched, this may return "*accessibility error* (0x60000104cbf8)"
+	-- this value is not nil so we need to check by casting
+	if not element:isValid() then return end
+	observer
+		:addWatcher(element, "AXTitleChanged")
+		:addWatcher(element, "AXFocusedUIElementChanged")
+		:addWatcher(element, "AXLoadComplete")
+		:callback(observerCallback)
+		:start()
 end
 
 obj.modal = nil
@@ -316,17 +346,15 @@ function obj:start(appObj)
     end
     notficationObserver:start()
 
-    setupTitleChangeObserver(appObj)
-    onTitleChangeObserverCallback()
-    setupAddressBarFocusObserver(appObj)
+    setupObservers(appObj)
+		-- manually trigger once on app activation to switch to the proper layout
+    observerCallback("AXTitleChanged")
 
     return self
 end
 
 function obj:stop()
-    for _, obs in ipairs({notficationObserver, windowTitleObserver, focusedElementObserver}) do
-      if obs then obs:stop() end
-    end
+		if observer then observer:stop() end
     obj.modal:exit()
     return self
 end
