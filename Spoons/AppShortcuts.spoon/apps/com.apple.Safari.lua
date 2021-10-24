@@ -1,7 +1,6 @@
 local EventTap = require("hs.eventtap")
 local AppleScript = require("hs.osascript").applescript
 local KeyCodes = require("hs.keycodes")
-local Timer = require("hs.timer")
 local FnUtils = require("hs.fnutils")
 local Settings = require("hs.settings")
 local UI = require("rb.ui")
@@ -19,7 +18,6 @@ end
 local obj = {}
 local _appObj = nil
 local observer = nil
-local focusedElementObserver = nil
 local layoutsPerURLKey = "RBSafariLayoutsForURL"
 local notficationObserver = nil
 
@@ -196,49 +194,9 @@ local function onReceiveInputSourceChangeNotification()
     Settings.set(layoutsPerURLKey, settingsTable)
 end
 
-local function setupLoadCompleteObserver(appObj)
-	local pid = appObj:pid()
-	loadComplete = Observer.new(pid)
-	local element = AX.applicationElement(appObj)
-	if not element:isValid() then return end
-	focusedElementObserver
-		:addWatcher(element, "AXFocusedUIElementChanged")
-		:callback(function(_, uielement, _, _)
-				if KeyCodes.currentLayout() ~= "Hebrew" then return end
-				local path = uielement:path()
-				local app = path and path[1]
-				local focusedElement = app and app:attributeValue("AXFocusedUIElement")
-				local identifier = focusedElement and focusedElement:attributeValue("AXIdentifier")
-				if identifier == "WEB_BROWSER_ADDRESS_AND_SEARCH_FIELD" then
-						KeyCodes.setLayout("ABC")
-				end
-			end)
-		:start()
-end
-
--- switches to ABC upon focusing the address bar
-local function setupAddressBarFocusObserver(appObj)
-	local pid = appObj:pid()
-	focusedElementObserver = Observer.new(pid)
-	local element = AX.applicationElement(appObj)
-	if not element:isValid() then return end
-	focusedElementObserver
-		:addWatcher(element, "AXFocusedUIElementChanged")
-		:callback(function(_, uielement, _, _)
-				if KeyCodes.currentLayout() ~= "Hebrew" then return end
-				local path = uielement:path()
-				local app = path and path[1]
-				local focusedElement = app and app:attributeValue("AXFocusedUIElement")
-				local identifier = focusedElement and focusedElement:attributeValue("AXIdentifier")
-				if identifier == "WEB_BROWSER_ADDRESS_AND_SEARCH_FIELD" then
-						KeyCodes.setLayout("ABC")
-				end
-			end)
-		:start()
-end
-
 local function observerCallback(observerObj, uiElement, notifName, moreInfo)
 
+	-- switches to ABC upon focusing the address bar
 	if notifName == "AXFocusedUIElementChanged" then
 		if KeyCodes.currentLayout() ~= "Hebrew" then return end
 		local path = uiElement:path()
