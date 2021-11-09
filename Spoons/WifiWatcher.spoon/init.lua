@@ -28,19 +28,19 @@ local knownNetworks = {}
 --- Returns:
 ---  * the module object, for method chaining.
 function obj:userCallback()
-  local muteSoundUnknownWifi = Settings.get(settingKey)
-  local audioDevice = audiodevice.defaultOutputDevice()
-  local currentWifi = wifi.currentNetwork()
-  if fnutils.contains(knownNetworks, currentWifi) or muteSoundUnknownWifi == false then
-    audioDevice:setOutputMuted(false)
-  else
-    audioDevice:setOutputMuted(true)
-  end
-  return self
+	local muteSoundUnknownWifi = Settings.get(settingKey)
+	local audioDevice = audiodevice.defaultOutputDevice()
+	local currentWifi = wifi.currentNetwork()
+	if fnutils.contains(knownNetworks, currentWifi) or muteSoundUnknownWifi == false then
+		audioDevice:setOutputMuted(false)
+	else
+		audioDevice:setOutputMuted(true)
+	end
+	return self
 end
 
 local function wifiWatcherCallback()
-  timer.doAfter(2, obj.userCallback)
+	timer.doAfter(2, obj.userCallback)
 end
 
 --- WifiWatcher:start()
@@ -53,11 +53,11 @@ end
 --- Returns:
 ---  * the module object, for method chaining.
 function obj:start(_knownNetworks)
-  knownNetworks = _knownNetworks or {};
-  wifiWatcherCallback()
-  wifiWatcher:start()
-  isActive = true
-  return self
+	knownNetworks = _knownNetworks or {}
+	wifiWatcherCallback()
+	wifiWatcher:start()
+	isActive = true
+	return self
 end
 
 --- WifiWatcher:stop()
@@ -66,9 +66,9 @@ end
 --- Returns:
 ---   * the module object, for method chaining.
 function obj:stop()
-  wifiWatcher:stop()
-  isActive = false
-  return self
+	wifiWatcher:stop()
+	isActive = false
+	return self
 end
 
 --- WifiWatcher:isActive()
@@ -76,7 +76,7 @@ end
 --- Returns:
 ---  * A boolean, true if the watcher is active, otherwise false.
 function obj:isActive()
-  return isActive
+	return isActive
 end
 
 --- WifiWatcher:toggle()
@@ -85,18 +85,18 @@ end
 --- Returns:
 ---   * the module object, for method chaining.
 function obj:toggle()
-  if isActive then
-    wifiWatcher:stop()
-  else
-    wifiWatcher:start()
-  end
-  return self
+	if isActive then
+		wifiWatcher:stop()
+	else
+		wifiWatcher:start()
+	end
+	return self
 end
 
 function obj:init()
-  Settings.set(settingKey, true)
-  wifiWatcher = wifi.watcher.new(wifiWatcherCallback)
-  return self
+	Settings.set(settingKey, true)
+	wifiWatcher = wifi.watcher.new(wifiWatcherCallback)
+	return self
 end
 
 return obj

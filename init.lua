@@ -34,14 +34,12 @@ local appQuitterConfig = {
 local hyper = {"shift", "cmd", "alt", "ctrl"}
 
 local globalShortcuts = {
-  keyboardLayoutManager = {
-    toggleInputSource = { {}, 10 }
-  },
   globals = {
-    rightClick = {hyper, "o"},
+		rightClick = {hyper, "o"},
     focusDock = {
-      {"cmd", "alt"}, "d"
-    }
+			{"cmd", "alt"}, "d"
+    },
+		toggleInputSource = { {}, 10 }
   },
   windowManager = {
     pushLeft = {hyper, "left"},
@@ -95,8 +93,7 @@ spoon.ConfigWatcher:start()
 spoon.DownloadsWatcher:start()
 spoon.WifiWatcher:start(knownNetworks)
 spoon.StatusBar:start()
-
-spoon.KeyboardLayoutManager:bindHotKeys(globalShortcuts.keyboardLayoutManager):start(layoutSwitcherIgnored)
+spoon.KeyboardLayoutManager:start(layoutSwitcherIgnored, "ABC")
 spoon.GlobalShortcuts:bindHotKeys(globalShortcuts.globals)
 spoon.WindowManager:bindHotKeys(globalShortcuts.windowManager)
 spoon.NotificationCenter:bindHotKeys(globalShortcuts.notificationCenter)
