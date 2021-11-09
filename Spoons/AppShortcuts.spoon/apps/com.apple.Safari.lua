@@ -16,9 +16,8 @@ local obj = {}
 local _appObj = nil
 local observer = nil
 local layoutsPerURLKey = "RBSafariLayoutsForURL"
-local notficationObserver = nil
-local inputSourceSwitchExcludedUrls = {"bookmarks://", "history://", "favorites://", nil, ""}
 local layoutForUrl = {}
+local inputSourceSwitchExcludedUrls = {"bookmarks://", "history://", "favorites://", nil, ""}
 local prevUrl
 local defaultLayout = "ABC"
 

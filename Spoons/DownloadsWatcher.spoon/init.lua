@@ -37,6 +37,9 @@ local processedDownloadsInodesKey = "RBDownloadsWatcherProcessedDownloadsInodes"
 local home = os.getenv("HOME")
 local downloadsDir = home .. "/Downloads"
 local trash = home .. "/.Trash/"
+local processedDownloadsInodes
+local pathWatcher
+local throttledTimer
 
 local function moveToTrash(path)
 	local _displayName = FS.displayName(path)
@@ -80,7 +83,52 @@ local function handleZip(path)
 	):start()
 end
 
-local rules = {
+local function renamePdfBasedOnText(path, text, rules)
+	local year
+	local month
+	for _, rule in ipairs(rules) do
+		for _, token in ipairs(rule.tokens) do
+			print(token)
+		end
+	end
+end
+
+local function handlePdf(path, rules)
+	local script = script_path() .. "/get_pdf_text.py"
+	Task.new(
+		script,
+		function(exit, textResult, stderr)
+			if exit ~= 0 then
+				print(stderr)
+			end
+			renamePdfBasedOnText(path, textResult, rules)
+		end,
+		{path}
+	):start()
+end
+
+local function handleGz(path)
+	Task.new(
+		"/usr/bin/tar",
+		function(exit, out, err)
+			print(exit, out, err)
+			moveToTrash(path)
+		end,
+		{"-xvf", path, "-C", downloadsDir}
+	):start()
+end
+
+local function handleDmg(path)
+	Task.new(
+		script_path() .. "handle_dmg.sh",
+		function(exit, out, err)
+			print(exit, out, err)
+		end,
+		{path}
+	):start()
+end
+
+local pdfRenamingRules = {
 	{
 		targetName = "bezeqint",
 		tokens = {
@@ -155,52 +203,7 @@ local rules = {
 	}
 }
 
-local function renamePdfBasedOnText(path, text)
-	local year
-	local month
-	for _, rule in ipairs(rules) do
-		for _, token in ipairs(rule.tokens) do
-			print(token)
-		end
-	end
-end
-
-local function handlePdf(path)
-	local script = script_path() .. "/get_pdf_text.py"
-	Task.new(
-		script,
-		function(exit, textResult, stderr)
-			if exit ~= 0 then
-				print(stderr)
-			end
-			renamePdfBasedOnText(path, textResult)
-		end,
-		{path}
-	):start()
-end
-
-local function handleGz(path)
-	Task.new(
-		"/usr/bin/tar",
-		function(exit, out, err)
-			print(exit, out, err)
-			moveToTrash(path)
-		end,
-		{"-xvf", path, "-C", downloadsDir}
-	):start()
-end
-
-local function handleDmg(path)
-	Task.new(
-		script_path() .. "handle_dmg.sh",
-		function(exit, out, err)
-			print(exit, out, err)
-		end,
-		{path}
-	):start()
-end
-
-local rules = {
+local processingRules = {
 	{
 		patterns = {".DS_Store", ".localized", ".", ".."},
 		isRegex = false,
@@ -234,7 +237,9 @@ local rules = {
 	{
 		patterns = {"%.pdf$"},
 		isRegex = true,
-		exec = handlePdf
+		exec = function(path)
+			handlePdf(path, pdfRenamingRules)
+		end
 	},
 	{
 		patterns = {"%.tgz$", "%.gz$"},
@@ -247,10 +252,6 @@ local rules = {
 		exec = handleDmg
 	}
 }
-
-local processedDownloadsInodes
-local pathWatcher
-local throttledTimer
 
 local function shouldProcessFile(_rules, fileName)
 	local functionToExecute = nil
@@ -283,7 +284,7 @@ local function watcherCallback()
 	end
 
 	for file in iterFn, dirObj do
-		local functionToExecute = shouldProcessFile(rules, file)
+		local functionToExecute = shouldProcessFile(processingRules, file)
 		if functionToExecute then
 			local fullPath = downloadsDir .. "/" .. file
 			local inode = FS.attributes(fullPath, "ino")
