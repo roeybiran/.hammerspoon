@@ -21,68 +21,83 @@ local cachedInterfaceStyleKey = "RBAppearanceWatcherCachedInterfaceStyle"
 local appearancePlist = os.getenv("HOME") .. "/Library/Preferences/.GlobalPreferences.plist"
 
 local function script_path()
-  local str = debug.getinfo(2, "S").source:sub(2)
-  return str:match("(.*/)")
+	local str = debug.getinfo(2, "S").source:sub(2)
+	return str:match("(.*/)")
 end
 
 local function setStyle()
-  local currentSystemStyle = Host.interfaceStyle() or "Light"
-  local cachedStyle = settings.get(cachedInterfaceStyleKey)
-  if currentSystemStyle ~= cachedStyle then
-    local msg = string.format("AppearanceWatcher: detected a system style change, from %s to %s", cachedStyle, currentSystemStyle)
-    print(msg)
-    settings.set(cachedInterfaceStyleKey, currentSystemStyle)
-    task.new(script_path() .. "/appearance.sh", function(exitCode, stdOut, stdErr)
-      if exitCode > 0 then
-        msg = string.format([[AppearanceWatcher: appearance.sh exited with non-zero exit code (%s). stdout: %s, stderr: %s]], exitCode, stdOut, stdErr)
-        print(msg)
-      end
-    end, {currentSystemStyle:lower()}):start()
-  end
+	local currentSystemStyle = Host.interfaceStyle() or "Light"
+	local cachedStyle = settings.get(cachedInterfaceStyleKey)
+	if currentSystemStyle ~= cachedStyle then
+		local msg =
+			string.format("AppearanceWatcher: detected a system style change, from %s to %s", cachedStyle, currentSystemStyle)
+		print(msg)
+		settings.set(cachedInterfaceStyleKey, currentSystemStyle)
+		task.new(
+			script_path() .. "/appearance.sh",
+			function(exitCode, stdOut, stdErr)
+				if exitCode > 0 then
+					msg =
+						string.format(
+						[[AppearanceWatcher: appearance.sh exited with non-zero exit code (%s). stdout: %s, stderr: %s]],
+						exitCode,
+						stdOut,
+						stdErr
+					)
+					print(msg)
+				end
+			end,
+			{currentSystemStyle:lower()}
+		):start()
+	end
 end
 
 function obj:init()
-  if settings.get(appearanceWatcherActiveKey) == nil then
-    settings.set(appearanceWatcherActiveKey, true)
-  end
-  if settings.get(appearanceWatcherActiveKey) then
-    obj:start()
-  end
-  return self
+	if settings.get(appearanceWatcherActiveKey) == nil then
+		settings.set(appearanceWatcherActiveKey, true)
+	end
+	if settings.get(appearanceWatcherActiveKey) then
+		obj:start()
+	end
+	return self
 end
 
 --- AppearanceWatcher:stop()
 --- Method
 --- Stops this module.
 function obj:stop()
-  watcher:stop()
-  watcher = nil
-  return self
+	watcher:stop()
+	watcher = nil
+	return self
 end
 
 --- AppearanceWatcher:start()
 --- Method
 --- starts this module.
 function obj:start()
-  watcher = PathWatcher.new(appearancePlist, function()
-    setStyle()
-  end):start()
-  setStyle()
-  return self
+	watcher =
+		PathWatcher.new(
+		appearancePlist,
+		function()
+			setStyle()
+		end
+	):start()
+	setStyle()
+	return self
 end
 
 --- AppearanceWatcher:toggle()
 --- Method
 --- Toggles this module.
 function obj:toggle()
-  if obj:isActive() then
-    settings.set(appearanceWatcherActiveKey, false)
-    obj:stop()
-  else
-    settings.set(appearanceWatcherActiveKey, true)
-    obj:start()
-  end
-  return self
+	if obj:isActive() then
+		settings.set(appearanceWatcherActiveKey, false)
+		obj:stop()
+	else
+		settings.set(appearanceWatcherActiveKey, true)
+		obj:start()
+	end
+	return self
 end
 
 --- AppearanceWatcher:isActive()
@@ -92,7 +107,7 @@ end
 --- Returns:
 ---  * A boolean, true if the module's watcher is active, otherwise false
 function obj.isActive()
-  return watcher ~= nil
+	return watcher ~= nil
 end
 
 return obj

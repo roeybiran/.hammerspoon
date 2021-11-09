@@ -26,35 +26,35 @@ local TIMERS_PLIST_PATH = HOME .. "/Library/Preferences/com.rb.hs.appquitter.tra
 local appWatcher = nil
 
 function obj.log()
-  print("AppQuitter log:")
-  for line in io.lines(HOME .. "/Library/Logs/com.rb.hs.appquitter.errors.log") do
-    print(line)
-  end
+	print("AppQuitter log:")
+	for line in io.lines(HOME .. "/Library/Logs/com.rb.hs.appquitter.errors.log") do
+		print(line)
+	end
 end
 
 local function script_path()
-  local str = debug.getinfo(2, "S").source:sub(2)
-  return str:match("(.*/)")
+	local str = debug.getinfo(2, "S").source:sub(2)
+	return str:match("(.*/)")
 end
 
 local function updateIntervalsForBackgroundLaunchedOrDeactivatedApp(bundleID)
-  if not bundleID or not rules[bundleID] then
-    return
-  end
-  -- the sole purpose of this function is to start/update the timer
-  -- when an app is deactivated or launched (in the background).
-  local now = os.time()
-  local quitInterval = now + rules[bundleID].quit
-  local hideInterval = now + rules[bundleID].hide
-  local timersPlist = Plist.read(TIMERS_PLIST_PATH)
-  if not timersPlist then
-    timersPlist = {}
-  end
-  if not timersPlist[bundleID] then
-    timersPlist[bundleID] = {}
-  end
-  timersPlist[bundleID] = {quit = quitInterval, hide = hideInterval}
-  Plist.write(TIMERS_PLIST_PATH, timersPlist)
+	if not bundleID or not rules[bundleID] then
+		return
+	end
+	-- the sole purpose of this function is to start/update the timer
+	-- when an app is deactivated or launched (in the background).
+	local now = os.time()
+	local quitInterval = now + rules[bundleID].quit
+	local hideInterval = now + rules[bundleID].hide
+	local timersPlist = Plist.read(TIMERS_PLIST_PATH)
+	if not timersPlist then
+		timersPlist = {}
+	end
+	if not timersPlist[bundleID] then
+		timersPlist[bundleID] = {}
+	end
+	timersPlist[bundleID] = {quit = quitInterval, hide = hideInterval}
+	Plist.write(TIMERS_PLIST_PATH, timersPlist)
 end
 
 --- AppQuitter:update(event, bundleID)
@@ -65,11 +65,11 @@ end
 ---  * `event` - A string, one of the `hs.application.watcher` event constants.
 ---  * `bundleID` - A string, the bundle identifier of event-triggering app.
 function obj:update(event, bundleID)
-  -- bail out if app is excluded
-  if event == Application.watcher.deactivated or event == Application.watcher.launched then
-    updateIntervalsForBackgroundLaunchedOrDeactivatedApp(bundleID)
-  end
-  return self
+	-- bail out if app is excluded
+	if event == Application.watcher.deactivated or event == Application.watcher.launched then
+		updateIntervalsForBackgroundLaunchedOrDeactivatedApp(bundleID)
+	end
+	return self
 end
 
 --- AppQuitter:start([rules])
@@ -87,98 +87,102 @@ end
 --- Returns:
 ---  * the module object, for method chaining
 function obj:start(_config)
-  local config = _config or {}
-  local launchdRunInterval = config.launchdRunInterval or 600
-  local quitInterval = config.defaultQuitInterval or 14400
-  local hideInterval = config.defaultHideInterval or 1800
-  local _rules = config.rules or {}
+	local config = _config or {}
+	local launchdRunInterval = config.launchdRunInterval or 600
+	local quitInterval = config.defaultQuitInterval or 14400
+	local hideInterval = config.defaultHideInterval or 1800
+	local _rules = config.rules or {}
 
-  appWatcher:start()
-  local launchdLabel = "com.rb.hs.appquitter.daemon"
-  local launchdPlistPath = HOME .. "/Library/LaunchAgents/" .. launchdLabel .. ".plist"
-  local launchdPlistObject = {
-    Label = launchdLabel,
-    StartInterval = tonumber(launchdRunInterval),
-    ProgramArguments = {"/usr/local/bin/appquitter"},
-    StandardErrorPath = HOME .. "/Library/Logs/com.rb.hs.appquitter.errors.log",
-    StandardOutPath = HOME .. "/Library/Logs/com.rb.hs.appquitter.log",
-  }
+	appWatcher:start()
+	local launchdLabel = "com.rb.hs.appquitter.daemon"
+	local launchdPlistPath = HOME .. "/Library/LaunchAgents/" .. launchdLabel .. ".plist"
+	local launchdPlistObject = {
+		Label = launchdLabel,
+		StartInterval = tonumber(launchdRunInterval),
+		ProgramArguments = {"/usr/local/bin/appquitter"},
+		StandardErrorPath = HOME .. "/Library/Logs/com.rb.hs.appquitter.errors.log",
+		StandardOutPath = HOME .. "/Library/Logs/com.rb.hs.appquitter.log"
+	}
 
-  local launchdPlistExists = FS.displayName(launchdPlistPath) ~= nil
+	local launchdPlistExists = FS.displayName(launchdPlistPath) ~= nil
 
-  local shouldUpdateLaunchdPlist = false
-  if launchdPlistExists then
-    local currentPlist = Plist.read(launchdPlistPath)
-    for property, _ in pairs(launchdPlistObject) do
-      if launchdPlistObject[property] ~= currentPlist[property] then
-        shouldUpdateLaunchdPlist = true
-        os.execute(string.format([[/bin/launchctl unload "%s"]], launchdPlistPath))
-        break
-      end
-    end
-  end
+	local shouldUpdateLaunchdPlist = false
+	if launchdPlistExists then
+		local currentPlist = Plist.read(launchdPlistPath)
+		for property, _ in pairs(launchdPlistObject) do
+			if launchdPlistObject[property] ~= currentPlist[property] then
+				shouldUpdateLaunchdPlist = true
+				os.execute(string.format([[/bin/launchctl unload "%s"]], launchdPlistPath))
+				break
+			end
+		end
+	end
 
-  if not launchdPlistExists or shouldUpdateLaunchdPlist then
-    Plist.write(launchdPlistPath, launchdPlistObject)
-  end
+	if not launchdPlistExists or shouldUpdateLaunchdPlist then
+		Plist.write(launchdPlistPath, launchdPlistObject)
+	end
 
-  -- tracker plist
-  local secsSinceBoot = Timer.absoluteTime() * (10 ^ -9)
-  local shouldCleanUp = secsSinceBoot < 50
-  if not FS.displayName(TIMERS_PLIST_PATH) or shouldCleanUp then
-    Plist.write(TIMERS_PLIST_PATH, {})
-  end
+	-- tracker plist
+	local secsSinceBoot = Timer.absoluteTime() * (10 ^ -9)
+	local shouldCleanUp = secsSinceBoot < 50
+	if not FS.displayName(TIMERS_PLIST_PATH) or shouldCleanUp then
+		Plist.write(TIMERS_PLIST_PATH, {})
+	end
 
-  -- script executed by launchd
-  local launchdScriptDst = "/usr/local/bin/appquitter"
-  os.remove(launchdScriptDst)
-  FS.link(script_path() .. "launchd.py", launchdScriptDst, true)
+	-- script executed by launchd
+	local launchdScriptDst = "/usr/local/bin/appquitter"
+	os.remove(launchdScriptDst)
+	FS.link(script_path() .. "launchd.py", launchdScriptDst, true)
 
-  local stdout, _, _, _ = hs.execute("/bin/launchctl list")
-  local isJobLoaded = string.match(stdout, launchdLabel)
-  if not isJobLoaded then
-    os.execute(string.format([[/bin/launchctl load "%s"]], launchdPlistPath))
-  end
+	local stdout, _, _, _ = hs.execute("/bin/launchctl list")
+	local isJobLoaded = string.match(stdout, launchdLabel)
+	if not isJobLoaded then
+		os.execute(string.format([[/bin/launchctl load "%s"]], launchdPlistPath))
+	end
 
-  local appsWithRunningTimers = {}
-  local timersPlist = Plist.read(TIMERS_PLIST_PATH) or {}
-  for appID, _ in pairs(timersPlist) do
-    table.insert(appsWithRunningTimers, appID)
-  end
+	local appsWithRunningTimers = {}
+	local timersPlist = Plist.read(TIMERS_PLIST_PATH) or {}
+	for appID, _ in pairs(timersPlist) do
+		table.insert(appsWithRunningTimers, appID)
+	end
 
-  for key, value in pairs(_rules) do
-    local appUsesDefaultIntervals = tonumber(key)
-    local appName;
-    if appUsesDefaultIntervals then
-      appName = value
-    else
-      appName = key
-      -- convert to seconds
-      quitInterval = math.max((value.quit or 0) * (60 * 60), quitInterval)
-      hideInterval = math.max((value.hide or 0) * (60 * 60), hideInterval)
-    end
-    rules[appName] = {quit = quitInterval, hide = hideInterval}
-  end
+	for key, value in pairs(_rules) do
+		local appUsesDefaultIntervals = tonumber(key)
+		local appName
+		if appUsesDefaultIntervals then
+			appName = value
+		else
+			appName = key
+			-- convert to seconds
+			quitInterval = math.max((value.quit or 0) * (60 * 60), quitInterval)
+			hideInterval = math.max((value.hide or 0) * (60 * 60), hideInterval)
+		end
+		rules[appName] = {quit = quitInterval, hide = hideInterval}
+	end
 
-  local _, dockApps, _ = AppleScript [[
+	local _, dockApps, _ =
+		AppleScript [[
   tell app "System Events" to return the bundle identifier of every application process whose background only is false
   ]]
-  for _, appID in ipairs(dockApps) do
-    if not FnUtils.contains(appsWithRunningTimers, appID) then
-      updateIntervalsForBackgroundLaunchedOrDeactivatedApp(appID)
-    end
-  end
+	for _, appID in ipairs(dockApps) do
+		if not FnUtils.contains(appsWithRunningTimers, appID) then
+			updateIntervalsForBackgroundLaunchedOrDeactivatedApp(appID)
+		end
+	end
 
-  return self
+	return self
 end
 
 function obj:init()
-  appWatcher = Application.watcher.new(function(_, event, appObj)
-    if appObj then
-      obj:update(event, appObj:bundleID())
-    end
-  end)
-  return self
+	appWatcher =
+		Application.watcher.new(
+		function(_, event, appObj)
+			if appObj then
+				obj:update(event, appObj:bundleID())
+			end
+		end
+	)
+	return self
 end
 
 return obj

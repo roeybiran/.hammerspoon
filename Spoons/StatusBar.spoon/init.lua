@@ -9,8 +9,8 @@ local Window = require("hs.window")
 local spoon = spoon
 
 local function script_path()
-  local str = debug.getinfo(2, "S").source:sub(2)
-  return str:match("(.*/)")
+	local str = debug.getinfo(2, "S").source:sub(2)
+	return str:match("(.*/)")
 end
 
 local obj = {}
@@ -31,49 +31,49 @@ local flashingIconTimer
 local taskQueue = 0
 
 local function mainMenu()
-  return {
-    {
-      title = "Turn On Window Highlighting",
-      fn = function()
-        Window.highlight.start()
-      end,
-    },
-    {
-      title = "Turn Off Window Highlighting",
-      fn = function()
-        Window.highlight.stop()
-      end,
-    },
-    {title = "-"},
-    {
-      title = "Watch for config changes",
-      fn = function()
-        spoon.ConfigWatcher:toggle()
-      end,
-      checked = spoon.ConfigWatcher:isActive(),
-    },
-    {
-      title = "Watch for appearance changes",
-      fn = function()
-        spoon.AppearanceWatcher:toggle()
-      end,
-      checked = spoon.AppearanceWatcher:isActive(),
-    },
-    {
-      title = "Mute on unknown networks",
-      fn = function()
-        spoon.WifiWatcher:toggle()
-      end,
-      checked = spoon.WifiWatcher:isActive(),
-    },
-    {title = "-"},
-    {
-      title = "Quit Hammerspoon",
-      fn = function()
-        HSApplication("Hammerspoon"):kill()
-      end,
-    },
-  }
+	return {
+		{
+			title = "Turn On Window Highlighting",
+			fn = function()
+				Window.highlight.start()
+			end
+		},
+		{
+			title = "Turn Off Window Highlighting",
+			fn = function()
+				Window.highlight.stop()
+			end
+		},
+		{title = "-"},
+		{
+			title = "Watch for config changes",
+			fn = function()
+				spoon.ConfigWatcher:toggle()
+			end,
+			checked = spoon.ConfigWatcher:isActive()
+		},
+		{
+			title = "Watch for appearance changes",
+			fn = function()
+				spoon.AppearanceWatcher:toggle()
+			end,
+			checked = spoon.AppearanceWatcher:isActive()
+		},
+		{
+			title = "Mute on unknown networks",
+			fn = function()
+				spoon.WifiWatcher:toggle()
+			end,
+			checked = spoon.WifiWatcher:isActive()
+		},
+		{title = "-"},
+		{
+			title = "Quit Hammerspoon",
+			fn = function()
+				HSApplication("Hammerspoon"):kill()
+			end
+		}
+	}
 end
 
 -- StatusBar.menuTable
@@ -85,43 +85,53 @@ obj.menuTable = nil
 -- Method
 -- TODO
 function obj:addTask()
-  if not flashingIconTimer:running() then
-    flashingIconTimer:start()
-  end
-  taskQueue = taskQueue + 1
-  return self
+	if not flashingIconTimer:running() then
+		flashingIconTimer:start()
+	end
+	taskQueue = taskQueue + 1
+	return self
 end
 
 -- StatusBar:removeTask()
 -- Method
 -- TODO
 function obj:removeTask()
-  taskQueue = taskQueue - 1
-  if taskQueue < 1 then
-    menuBarItem:setIcon(regularIconPath)
-    flashingIconTimer:stop()
-  end
-  return self
+	taskQueue = taskQueue - 1
+	if taskQueue < 1 then
+		menuBarItem:setIcon(regularIconPath)
+		flashingIconTimer:stop()
+	end
+	return self
 end
 
 function obj:start()
-  menuBarItem = HSMenubar.new():setIcon(regularIconPath):setMenu(mainMenu)
-  flashingIconTimer = HSTimer.new(0.2, function()
-    if current == "regular" then
-      menuBarItem:setIcon(regularIconPath)
-      current = "faded"
-    else
-      menuBarItem:setIcon(fadedIconPath)
-      current = "regular"
-    end
-  end)
-  HSURLEvent.bind("start-task-with-progress", function()
-    obj:addTask()
-  end)
-  HSURLEvent.bind("stop-task-with-progress", function()
-    obj:removeTask()
-  end)
-  return self
+	menuBarItem = HSMenubar.new():setIcon(regularIconPath):setMenu(mainMenu)
+	flashingIconTimer =
+		HSTimer.new(
+		0.2,
+		function()
+			if current == "regular" then
+				menuBarItem:setIcon(regularIconPath)
+				current = "faded"
+			else
+				menuBarItem:setIcon(fadedIconPath)
+				current = "regular"
+			end
+		end
+	)
+	HSURLEvent.bind(
+		"start-task-with-progress",
+		function()
+			obj:addTask()
+		end
+	)
+	HSURLEvent.bind(
+		"stop-task-with-progress",
+		function()
+			obj:removeTask()
+		end
+	)
+	return self
 end
 
 return obj

@@ -4,6 +4,8 @@
 local application = require("hs.application")
 local ax = require("hs.axuielement")
 local UI = require("rb.ui")
+local Keycodes = require("hs.keycodes")
+local DistributedNotifications = require("hs.distributednotifications")
 
 local hs = hs
 
@@ -17,15 +19,27 @@ obj.homepage = "https://github.com/Hammerspoon/Spoons"
 obj.license = "MIT - https://opensource.org/licenses/MIT"
 
 local function focusMenuBar()
-    ax.systemElementAtPosition({0, 0}):attributeValue("AXParent")[2]:performAction("AXPress")
+	ax.systemElementAtPosition({0, 0}):attributeValue("AXParent")[2]:performAction("AXPress")
 end
 
 local function rightClick()
-    ax.applicationElement(application.frontmostApplication()):attributeValue("AXFocusedUIElement"):performAction("AXShowMenu")
+	ax.applicationElement(application.frontmostApplication()):attributeValue("AXFocusedUIElement"):performAction(
+		"AXShowMenu"
+	)
 end
 
 local function focusDock()
-    UI.getUIElement(application("Dock"), {{"AXList", 1}}):setAttributeValue("AXFocused", true)
+	UI.getUIElement(application("Dock"), {{"AXList", 1}}):setAttributeValue("AXFocused", true)
+end
+
+local function toggleInputSource()
+	local newLayout = "ABC"
+	if Keycodes.currentLayout() == "ABC" then
+		newLayout = "Hebrew"
+	end
+
+	DistributedNotifications.post("InputSourceDidChange")
+	Keycodes.setLayout(newLayout)
 end
 
 --- Globals:bindHotKeys(_mapping)
@@ -37,19 +51,22 @@ end
 --- Parameters:
 ---   * `_mapping` - A table that conforms to the structure described in the Spoon plugin documentation.
 function obj:bindHotKeys(_mapping)
-    local def = {
-        rightClick = function()
-            rightClick()
-        end,
-        focusMenuBar = function()
-            focusMenuBar()
-        end,
-        focusDock = function()
-            focusDock()
-        end
-    }
-    hs.spoons.bindHotkeysToSpec(def, _mapping)
-    return self
+	local def = {
+		rightClick = function()
+			rightClick()
+		end,
+		focusMenuBar = function()
+			focusMenuBar()
+		end,
+		focusDock = function()
+			focusDock()
+		end,
+		toggleInputSource = function()
+			toggleInputSource()
+		end
+	}
+	hs.spoons.bindHotkeysToSpec(def, _mapping)
+	return self
 end
 
 return obj

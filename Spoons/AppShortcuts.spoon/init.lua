@@ -19,13 +19,13 @@ obj.homepage = "https://github.com/Hammerspoon/spoons"
 obj.license = "MIT - https://opensource.org/licenses/MIT"
 
 local function enterAppEnvironment(appObj, bundleID)
-    for key, value in pairs(appModals) do
-        if key == bundleID then
-            value:start(appObj)
-        else
-            value:stop()
-        end
-    end
+	for key, value in pairs(appModals) do
+		if key == bundleID then
+			value:start(appObj)
+		else
+			value:stop()
+		end
+	end
 end
 
 --- AppWatcher:start()
@@ -38,32 +38,35 @@ end
 --- Returns:
 ---  * self, for method chaining.
 function obj:start(transientApps)
-		Watcher:start(transientApps, function (bundleId, appObj, isWinFilterEvent)
+	Watcher:start(
+		transientApps,
+		function(bundleId, appObj, isWinFilterEvent)
 			enterAppEnvironment(appObj, bundleId)
-		end)
-    return self
+		end
+	)
+	return self
 end
 
 function obj:init()
-    local iterFn, dirObj = FS.dir(appScriptsDir)
-    if iterFn then
-        for file in iterFn, dirObj do
-            if string.sub(file, -3) == "lua" then
-                local basenameAndBundleID = string.sub(file, 1, -5)
-                local script = dofile(appScriptsDir .. file)
-                script.modal = Hotkey.modal.new()
-                for _, value in pairs(script.actions) do
-                    local hotkey = value.hotkey
-                    if hotkey then
-                        local mods, key = table.unpack(hotkey)
-                        script.modal:bind(mods, key, value.action)
-                    end
-                end
-                appModals[basenameAndBundleID] = script
-            end
-        end
-    end
-    return self
+	local iterFn, dirObj = FS.dir(appScriptsDir)
+	if iterFn then
+		for file in iterFn, dirObj do
+			if string.sub(file, -3) == "lua" then
+				local basenameAndBundleID = string.sub(file, 1, -5)
+				local script = dofile(appScriptsDir .. file)
+				script.modal = Hotkey.modal.new()
+				for _, value in pairs(script.actions) do
+					local hotkey = value.hotkey
+					if hotkey then
+						local mods, key = table.unpack(hotkey)
+						script.modal:bind(mods, key, value.action)
+					end
+				end
+				appModals[basenameAndBundleID] = script
+			end
+		end
+	end
+	return self
 end
 
 return obj
