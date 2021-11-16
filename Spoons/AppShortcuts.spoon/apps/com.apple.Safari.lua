@@ -1,9 +1,7 @@
-local AppleScript = require("hs.osascript").applescript
 local KeyCodes = require("hs.keycodes")
 local FnUtils = require("hs.fnutils")
-local Settings = require("hs.settings")
-
 local AX = require("hs.axuielement")
+local Settings = require("hs.settings")
 local Observer = AX.observer
 local hs = hs
 
@@ -15,8 +13,8 @@ end
 local obj = {}
 local _appObj = nil
 local observer = nil
+
 local layoutsPerURLKey = "RBSafariLayoutsForURL"
-local layoutForUrl = {}
 local inputSourceSwitchExcludedUrls = {"bookmarks://", "history://", "favorites://", nil, ""}
 local prevUrl
 local defaultLayout = "ABC"
@@ -47,23 +45,27 @@ local function observerCallback(observerObj, uiElement, notifName, moreInfo)
 	end
 
 	if notifName == "AXTitleChanged" then
-		local currentUrl = getCurrentURL()
-
-		local oldLayout = KeyCodes.currentLayout()
+		local currentSettings = Settings.get(layoutsPerURLKey)
+		local currentLayout = KeyCodes.currentLayout()
 		if prevUrl then
-			if oldLayout ~= defaultLayout then
-				layoutForUrl[prevUrl] = oldLayout
+			if currentLayout == defaultLayout then
+				currentSettings[prevUrl] = nil
 			else
-				layoutForUrl[prevUrl] = nil
+				currentSettings[prevUrl] = currentLayout
 			end
 		end
+
+		local currentUrl = getCurrentURL()
 		prevUrl = currentUrl
 
-		local newLayout = layoutForUrl[currentUrl]
+		-- print(hs.inspect(currentSettings), prevUrl)
+
+		local newLayout = currentSettings[currentUrl]
 		if not newLayout or FnUtils.contains(inputSourceSwitchExcludedUrls, currentUrl) then
 			newLayout = "ABC"
 		end
 		KeyCodes.setLayout(newLayout)
+		Settings.set(layoutsPerURLKey, currentSettings)
 	end
 
 	if notifName == "AXLoadComplete" then
@@ -165,7 +167,6 @@ function obj:start(appObj)
 	setupObservers(appObj)
 	-- manually trigger once on app activation to switch to the proper layout
 	-- observerCallback(nil, nil, "AXTitleChanged", nil)
-
 	return self
 end
 

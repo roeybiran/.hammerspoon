@@ -5,7 +5,6 @@ local application = require("hs.application")
 local ax = require("hs.axuielement")
 local UI = require("rb.ui")
 local Keycodes = require("hs.keycodes")
-local DistributedNotifications = require("hs.distributednotifications")
 
 local hs = hs
 
@@ -32,16 +31,6 @@ local function focusDock()
 	UI.getUIElement(application("Dock"), {{"AXList", 1}}):setAttributeValue("AXFocused", true)
 end
 
-local function toggleInputSource()
-	local newLayout = "ABC"
-	if Keycodes.currentLayout() == "ABC" then
-		newLayout = "Hebrew"
-	end
-
-	DistributedNotifications.post("InputSourceDidChange")
-	Keycodes.setLayout(newLayout)
-end
-
 --- Globals:bindHotKeys(_mapping)
 --- Method
 --- This module offers the following functionalities:
@@ -60,9 +49,6 @@ function obj:bindHotKeys(_mapping)
 		end,
 		focusDock = function()
 			focusDock()
-		end,
-		toggleInputSource = function()
-			toggleInputSource()
 		end
 	}
 	hs.spoons.bindHotkeysToSpec(def, _mapping)

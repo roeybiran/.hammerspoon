@@ -17,30 +17,30 @@ obj.license = "MIT - https://opensource.org/licenses/MIT"
 local brightnessControlModal = nil
 
 local function systemKey(key)
-  Eventtap.event.newSystemKeyEvent(string.upper(key), true):post()
-  Eventtap.event.newSystemKeyEvent(string.upper(key), false):post()
+	Eventtap.event.newSystemKeyEvent(string.upper(key), true):post()
+	Eventtap.event.newSystemKeyEvent(string.upper(key), false):post()
 end
 
 local function increaseBrightness()
-  systemKey("BRIGHTNESS_UP")
+	systemKey("BRIGHTNESS_UP")
 end
 
 local function decreaseBrightness()
-  systemKey("BRIGHTNESS_DOWN")
+	systemKey("BRIGHTNESS_DOWN")
 end
 
 --- BrightnessControl:start()
 --- Method
 --- Starts the module.
 function obj.start()
-  brightnessControlModal:enter()
+	brightnessControlModal:enter()
 end
 
 --- BrightnessControl:stop()
 --- Method
 --- Stops the module. Bound to the escape and return keys.
 function obj.stop()
-  brightnessControlModal:exit()
+	brightnessControlModal:exit()
 end
 
 --- BrightnessControl.increaseBrightnessKey
@@ -54,25 +54,25 @@ obj.increaseBrightnessKey = {mods = {}, key = "right"}
 obj.decreaseBrightnessKey = {mods = {}, key = "left"}
 
 function obj.init()
-  brightnessControlModal = Hotkey.modal.new()
-  brightnessControlModal:bind(
-    obj.increaseBrightnessKey.mods,
-    obj.increaseBrightnessKey.key,
-    nil,
-    increaseBrightness,
-    increaseBrightness,
-    nil
-  )
-  brightnessControlModal:bind(
-    obj.decreaseBrightnessKey.mods,
-    obj.decreaseBrightnessKey.key,
-    nil,
-    decreaseBrightness,
-    decreaseBrightness,
-    nil
-  )
-  brightnessControlModal:bind({}, "escape", nil, obj.stop, nil, nil)
-  brightnessControlModal:bind({}, "return", nil, obj.stop, nil, nil)
+	brightnessControlModal = Hotkey.modal.new()
+	brightnessControlModal:bind(
+		obj.increaseBrightnessKey.mods,
+		obj.increaseBrightnessKey.key,
+		nil,
+		increaseBrightness,
+		increaseBrightness,
+		nil
+	)
+	brightnessControlModal:bind(
+		obj.decreaseBrightnessKey.mods,
+		obj.decreaseBrightnessKey.key,
+		nil,
+		decreaseBrightness,
+		decreaseBrightness,
+		nil
+	)
+	brightnessControlModal:bind({}, "escape", nil, obj.stop, nil, nil)
+	brightnessControlModal:bind({}, "return", nil, obj.stop, nil, nil)
 end
 
 return obj
