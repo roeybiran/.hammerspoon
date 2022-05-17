@@ -22,7 +22,7 @@ local transientApps = {
 	["Emoji & Symbols"] = true
 }
 
-local layoutSwitcherIgnored = {"at.obdev.LaunchBar", "com.contextsformac.Contexts", "com.apple.Safari"}
+local layoutSwitcherIgnored = {"at.obdev.LaunchBar", "com.contextsformac.Contexts"}
 
 local appQuitterConfig = {
 	launchdRunInterval = 600, --- 10 minutes
@@ -83,17 +83,32 @@ if iterFn then
 	end
 end
 
--- must appear only after loadSpoon was called at least once?
-local spoon = spoon
-
 -- start (ORDER MATTERS!)
 spoon.AppQuitter:start(appQuitterConfig)
 spoon.AppShortcuts:start(transientApps)
 spoon.ConfigWatcher:start()
-spoon.DownloadsWatcher:start()
+spoon.DownloadsWatcher:start(require "downloadswatcher_rules")
 spoon.WifiWatcher:start(knownNetworks)
 spoon.StatusBar:start()
 spoon.KeyboardLayoutManager:start(layoutSwitcherIgnored, "ABC")
 spoon.GlobalShortcuts:bindHotKeys(globalShortcuts.globals)
 spoon.WindowManager:bindHotKeys(globalShortcuts.windowManager)
 spoon.NotificationCenter:bindHotKeys(globalShortcuts.notificationCenter)
+
+hs.hotkey.bind(
+	hyper,
+	"t",
+	function()
+		hs.osascript.applescript(
+			[[
+			if app "iTerm" is not frontmost then
+				tell app "iTerm" to activate
+			else
+				tell app "System Events" to set visible of application process "iTerm2" to false
+			end if
+			]]
+		)
+	end,
+	nil,
+	nil
+)

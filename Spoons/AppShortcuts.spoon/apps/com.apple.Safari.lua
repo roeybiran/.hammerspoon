@@ -11,8 +11,8 @@ local function script_path()
 end
 
 local obj = {}
-local _appObj = nil
-local observer = nil
+local _appObj
+local observer
 
 local layoutsPerURLKey = "RBSafariLayoutsForURL"
 local inputSourceSwitchExcludedUrls = {"bookmarks://", "history://", "favorites://", nil, ""}
@@ -27,21 +27,12 @@ local rightSizeBookmarksOrHistoryColumn = dofile(helpers .. "rightSizeBookmarksO
 local newBookmarksFolder = dofile(helpers .. "newBookmarksFolder.lua")
 local performPageNavigation = dofile(helpers .. "performPageNavigation.lua")
 local focusFirstSearchResult = dofile(helpers .. "focusFirstSearchResult.lua")
+local switchLayoutOnAdressBarFocus = dofile(helpers .. "switchLayoutOnAdressBarFocus.lua")
 local moveTab = dofile(helpers .. "moveTab.lua")
 
 local function observerCallback(observerObj, uiElement, notifName, moreInfo)
-	-- switches to ABC upon focusing the address bar
 	if notifName == "AXFocusedUIElementChanged" then
-		if KeyCodes.currentLayout() == "ABC" then
-			return
-		end
-		local path = uiElement and uiElement:path()
-		local app = path and path[1]
-		local focusedElement = app and app:attributeValue("AXFocusedUIElement")
-		local identifier = focusedElement and focusedElement:attributeValue("AXIdentifier")
-		if identifier == "WEB_BROWSER_ADDRESS_AND_SEARCH_FIELD" then
-			KeyCodes.setLayout("ABC")
-		end
+		switchLayoutOnAdressBarFocus(uiElement, "ABC")
 	end
 
 	if notifName == "AXTitleChanged" then
@@ -68,14 +59,13 @@ local function observerCallback(observerObj, uiElement, notifName, moreInfo)
 		Settings.set(layoutsPerURLKey, currentSettings)
 	end
 
-	if notifName == "AXLoadComplete" then
+	if notifName == "_AXLoadComplete" then
 		if not getCurrentURL():lower():match("google") then
 			return
 		end
 		-- unfocuses the address bar (if focused) after loading a web page.
 		-- Useful when using Vimari's hints feature, which don't work with the address bar focused.
 		-- in my experience, the address bar remains focused only after searching in Google
-		-- if the address bar wasn't focused, it's a regular return press. bail out
 		local isFocused = isAddressBarFocused(_appObj)
 		if not isFocused then
 			return
@@ -84,7 +74,7 @@ local function observerCallback(observerObj, uiElement, notifName, moreInfo)
 	end
 end
 
-local function setupObservers(appObj)
+local function setupObserver(appObj)
 	local pid = appObj:pid()
 	observer = Observer.new(pid)
 	local element = AX.applicationElement(appObj)
@@ -164,15 +154,16 @@ function obj:start(appObj)
 	_appObj = appObj
 	obj.modal:enter()
 
-	setupObservers(appObj)
+	setupObserver(appObj)
 	-- manually trigger once on app activation to switch to the proper layout
-	-- observerCallback(nil, nil, "AXTitleChanged", nil)
+	observerCallback(nil, nil, "AXTitleChanged", nil)
 	return self
 end
 
 function obj:stop()
 	if observer then
 		observer:stop()
+		observer = nil
 	end
 	obj.modal:exit()
 	return self

@@ -1,24 +1,28 @@
 --- === DownloadsWatcher ===
 ---
 --- Monitor the ~/Downloads folder, and execute a shell script that accepts newly downloaded files as arguments.
---- The script can be found in the Spoon's folder.
 local PathWatcher = require("hs.pathwatcher")
 local FS = require("hs.fs")
 local FNUtils = require("hs.fnutils")
 local Settings = require("hs.settings")
 local Timer = require("hs.timer")
-local Task = require("hs.task")
 
 local hs = hs
 local spoon = spoon
 local obj = {}
 
-obj.__index = obj
 obj.name = "DownloadsWatcher"
 obj.version = "1.0"
 obj.author = "roeybiran <roeybiran@icloud.com>"
-obj.homepage = "https://github.com/Hammerspoon/Spoons"
 obj.license = "MIT - https://opensource.org/licenses/MIT"
+obj.homepage = "https://github.com/roeybiran/.hammerspoon"
+
+local processedDownloadsInodesKey = "RBDownloadsWatcherProcessedDownloadsInodes"
+local _targetDir
+local _rules
+local processedDownloadsInodes
+local pathWatcher
+local throttledTimer
 
 local function tableCount(t)
 	local n = 0
@@ -28,271 +32,57 @@ local function tableCount(t)
 	return n
 end
 
-local function script_path()
-	local str = debug.getinfo(2, "S").source:sub(2)
-	return str:match("(.*/)")
-end
-
-local processedDownloadsInodesKey = "RBDownloadsWatcherProcessedDownloadsInodes"
-local home = os.getenv("HOME")
-local downloadsDir = home .. "/Downloads"
-local trash = home .. "/.Trash/"
-local processedDownloadsInodes
-local pathWatcher
-local throttledTimer
-
-local function moveToTrash(path)
-	local _displayName = FS.displayName(path)
-	os.rename(path, trash .. _displayName)
-end
-
-local function stripExtension(path)
+-- return the displayName without the extension
+local function getNameWithoutExtension(path)
 	local splitted = FNUtils.split(path, ".", true)
 	return table.unpack(splitted, 1, #splitted - 1)
 end
 
-local function convertToJpg(path)
-	local target = stripExtension(path) .. ".jpg"
-	Task.new(
-		"/usr/bin/sips",
-		function()
-			moveToTrash(path)
-		end,
-		{"-s", "format", "jpeg", path, "--out", target}
-	):start()
+-- https://codereview.stackexchange.com/a/90231
+-- gets the extension INCLUDING leading dot
+local function getExtension(path)
+	return path:match("^.+(%..+)$")
 end
 
-local function renameJpegToJpg(path)
-	local nameWithoutExt = stripExtension(path)
-	os.rename(path, nameWithoutExt .. ".jpg")
-end
-
-local function handleZip(path)
-	local nameWithoutExt = stripExtension(path)
-	local newDir, err = FS.mkdir(nameWithoutExt)
-	if not newDir then
-		print(err)
-		return
-	end
-	Task.new(
-		"/usr/bin/ditto",
-		function()
-			moveToTrash(path)
-		end,
-		{"-xk", path, nameWithoutExt}
-	):start()
-end
-
-local function renamePdfBasedOnText(path, text, rules)
-	local year
-	local month
+local function shouldProcessWithFunction(path, rules)
 	for _, rule in ipairs(rules) do
-		for _, token in ipairs(rule.tokens) do
-			print(token)
-		end
-	end
-end
-
-local function handlePdf(path, rules)
-	local script = script_path() .. "/get_pdf_text.py"
-	Task.new(
-		script,
-		function(exit, textResult, stderr)
-			if exit ~= 0 then
-				print(stderr)
-			end
-			renamePdfBasedOnText(path, textResult, rules)
-		end,
-		{path}
-	):start()
-end
-
-local function handleGz(path)
-	Task.new(
-		"/usr/bin/tar",
-		function(exit, out, err)
-			print(exit, out, err)
-			moveToTrash(path)
-		end,
-		{"-xvf", path, "-C", downloadsDir}
-	):start()
-end
-
-local function handleDmg(path)
-	Task.new(
-		script_path() .. "handle_dmg.sh",
-		function(exit, out, err)
-			print(exit, out, err)
-		end,
-		{path}
-	):start()
-end
-
-local pdfRenamingRules = {
-	{
-		targetName = "bezeqint",
-		tokens = {
-			"בזק בינלאומי"
-		}
-	},
-	{
-		targetName = "payme",
-		tokens = {
-			"פאיימי"
-		}
-	},
-	{
-		targetName = "avrech",
-		tokens = {
-			"אברך-אלון"
-		}
-	},
-	{
-		targetName = "bezeq",
-		tokens = {
-			"בזק החברה הישראלית לתקשורת"
-		}
-	},
-	{
-		targetName = "apple music",
-		tokens = {
-			"Apple Music"
-		}
-	},
-	{
-		targetName = "apple icloud",
-		tokens = {
-			"iCloud:"
-		}
-	},
-	{
-		targetName = "icount",
-		tokens = {
-			"אייקאונט מערכות"
-		}
-	},
-	{
-		targetName = "google",
-		tokens = {
-			"Google Workspace"
-		}
-	},
-	{
-		targetName = "upress",
-		tokens = {
-			"upress"
-		}
-	},
-	{
-		targetName = "pango",
-		tokens = {
-			"פנגו"
-		}
-	},
-	{
-		targetName = "meshulam",
-		tokens = {
-			"משולם"
-		}
-	},
-	{
-		targetName = "facebook",
-		tokens = {
-			"Facebook"
-		}
-	}
-}
-
-local processingRules = {
-	{
-		patterns = {".DS_Store", ".localized", ".", ".."},
-		isRegex = false,
-		exec = nil
-	},
-	{
-		patterns = {"%.crdownload$", "%.download$"},
-		isRegex = true,
-		exec = nil
-	},
-	{
-		patterns = {"%.ics$"},
-		isRegex = true,
-		exec = hs.open
-	},
-	{
-		patterns = {"%.heic$", "%.webp$"},
-		isRegex = true,
-		exec = convertToJpg
-	},
-	{
-		patterns = {"%.jpeg$"},
-		isRegex = true,
-		exec = renameJpegToJpg
-	},
-	{
-		patterns = {"%.zip$"},
-		isRegex = true,
-		exec = handleZip
-	},
-	{
-		patterns = {"%.pdf$"},
-		isRegex = true,
-		exec = function(path)
-			handlePdf(path, pdfRenamingRules)
-		end
-	},
-	{
-		patterns = {"%.tgz$", "%.gz$"},
-		isRegex = true,
-		exec = handleGz
-	},
-	{
-		patterns = {"%.dmg$"},
-		isRegex = true,
-		exec = handleDmg
-	}
-}
-
-local function shouldProcessFile(_rules, fileName)
-	local functionToExecute = nil
-	for _, setting in ipairs(_rules) do
-		for _, pattern in ipairs(setting.patterns) do
-			if setting.isRegex then
-				if string.find(string.lower(fileName), pattern) then
-					functionToExecute = setting.exec
-					break
+		for _, pattern in ipairs(rule.patterns) do
+			if rule.isRegex then
+				if path:lower():find(pattern:lower()) then
+					return rule.fn
 				end
 			else
-				if fileName == setting.pattern then
-					functionToExecute = setting.exec
-					break
+				if path:lower() == pattern:lower() then
+					return rule.fn
 				end
 			end
 		end
 	end
-	return functionToExecute
 end
 
-local function watcherCallback()
-	local iterFn, dirObj = FS.dir(downloadsDir)
+local function watcherCallback(paths, flagTables)
+	local iterFn, dirObj = FS.dir(_targetDir)
 	local totalFiles = {}
-	local filesPendingProcessing = {}
 
 	if not iterFn then
-		print(string.format("DownloadsWatcher FS.dir enumerator error: %s", dirObj))
+		hs.showError(string.format("DownloadsWatcher FS.dir enumerator error: %s", dirObj))
 		return
 	end
 
-	for file in iterFn, dirObj do
-		local functionToExecute = shouldProcessFile(processingRules, file)
-		if functionToExecute then
-			local fullPath = downloadsDir .. "/" .. file
-			local inode = FS.attributes(fullPath, "ino")
-			if not FNUtils.contains(processedDownloadsInodes, inode) then
-				table.insert(processedDownloadsInodes, inode)
-				table.insert(filesPendingProcessing, {path = fullPath, exec = functionToExecute})
+	local filesPendingProcessing = {}
+	for fileNameAndExtension in iterFn, dirObj do
+		local fnToExecute = shouldProcessWithFunction(fileNameAndExtension, _rules)
+		if fnToExecute then
+			local fullPath = _targetDir .. "/" .. fileNameAndExtension
+			local nameWithoutExt = getNameWithoutExtension(fullPath)
+			local ext = getExtension(fileNameAndExtension)
+			local attrs = FS.attributes(fullPath)
+			-- print(fileNameAndExtension, nameWithoutExt, attrs.inode, attrs.size, ext)
+			if not FNUtils.contains(processedDownloadsInodes, attrs.ino) then
+				table.insert(processedDownloadsInodes, attrs.ino)
+				table.insert(filesPendingProcessing, {path = fullPath, exec = fnToExecute})
 			end
-			table.insert(totalFiles, file)
+			table.insert(totalFiles, fullPath)
 		end
 	end
 
@@ -305,8 +95,9 @@ local function watcherCallback()
 	end
 
 	-- process the files
-	for _, file in ipairs(filesPendingProcessing) do
-		file.exec(file.path)
+	for _, fileObject in ipairs(filesPendingProcessing) do
+		-- fileObject.exec(fileObject.path)
+		print(fileObject.path, fileObject.fn)
 	end
 end
 
@@ -321,21 +112,29 @@ end
 --- DownloadsWatcher:start()
 --- Method
 --- Starts the module.
-function obj:start()
-	pathWatcher:start()
-	return self
-end
-
-function obj:init()
-	throttledTimer = Timer.delayed.new(1, watcherCallback)
+---
+--- Parameters:
+---  * targetDir - string, default `~/Downloads`. The folder to monitor.
+---  * rules - table, default `{}`. A list of rules to apply to the watcher. Each rule should have the following keys:
+---    * patterns - a list of strings to match the file name's against.
+---    * isRegex - whether to treat the strings in `patterns` as regular expressions.
+---    * fn - the function to execute for a successful match. It should accept a single parameter - the full path to the matched file.
+---
+--- Returns:
+---  * the module object.
+function obj:start(rules, targetDir)
+	_targetDir = targetDir or os.getenv("HOME") .. "/Downloads"
+	_rules = rules or {}
+	throttledTimer = throttledTimer or Timer.delayed.new(1, watcherCallback)
 	processedDownloadsInodes = Settings.get(processedDownloadsInodesKey) or {}
 	pathWatcher =
+		pathWatcher or
 		PathWatcher.new(
-		downloadsDir,
-		function()
-			throttledTimer:start()
-		end
-	)
+			_targetDir,
+			function()
+				throttledTimer:start()
+			end
+		):start()
 	return self
 end
 

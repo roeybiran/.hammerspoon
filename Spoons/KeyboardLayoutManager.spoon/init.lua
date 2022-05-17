@@ -55,9 +55,13 @@ end
 --- KeyboardLayoutManager:start(ignored)
 --- Method
 --- Starts the module.
+---
 --- Parameters:
 ---  * `ignored` - A table of bundle IDs of apps for which layout switching should be avoided.
 ---  * `defaultLayout` - The default layout to use if an app doesn't have a previously associated layout.
+---
+--- Returns:
+---  * the module object.
 function obj:start(ignored, defaultLayout)
 	_defaultLayout = defaultLayout
 	avoidSwitchingInputSourceOnActivation = ignored or {}

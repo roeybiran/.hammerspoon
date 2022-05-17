@@ -4,12 +4,12 @@
 local FS = require("hs.fs")
 local Spoons = require("hs.spoons")
 local Hotkey = require("hs.hotkey")
-
-local Watcher = hs.loadSpoon("CustomAppWatcher")
+local Application = require("hs.application")
 
 local appScriptsDir = Spoons.resourcePath("apps/")
 local obj = {}
 local appModals = {}
+local watcher
 
 obj.__index = obj
 obj.name = "ApplicationModalManager"
@@ -18,9 +18,12 @@ obj.author = "roeybiran <roeybiran@icloud.com>"
 obj.homepage = "https://github.com/Hammerspoon/spoons"
 obj.license = "MIT - https://opensource.org/licenses/MIT"
 
-local function enterAppEnvironment(appObj, bundleID)
+local function enterAppEnvironment(appName, event, appObj)
+	if event ~= Application.watcher.activated then
+		return
+	end
 	for key, value in pairs(appModals) do
-		if key == bundleID then
+		if key == appObj:bundleID() then
 			value:start(appObj)
 		else
 			value:stop()
@@ -32,18 +35,16 @@ end
 --- Method
 --- Starts the module.
 ---
---- Parameters:
----  * transientApps - A table, default empty, containing apps you consider to be transient and want to be taken into account by the window filter. Elements should have the same structure as the `filters` parameter of `hs.window.filter`’s `setFilters` method.
----
 --- Returns:
 ---  * self, for method chaining.
 function obj:start(transientApps)
-	Watcher:start(
-		transientApps,
-		function(bundleId, appObj, isWinFilterEvent)
-			enterAppEnvironment(appObj, bundleId)
-		end
-	)
+	watcher = Application.watcher.new(enterAppEnvironment)
+	watcher:start()
+	-- on reload, enter modal (if any) for the front app (saves a redundant cmd+tab)
+	local frontApp = Application.frontmostApplication()
+	if frontApp then
+		enterAppEnvironment(nil, Application.watcher.activated, frontApp)
+	end
 	return self
 end
 

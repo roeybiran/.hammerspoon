@@ -51,14 +51,14 @@ function obj:start(transientApps, _callback)
 		Window.filter.windowDestroyed,
 		Window.filter.windowFocused
 	}
-	-- on reload, enter modal (if any) for the front app (saves an redundant cmd+tab)
+	-- on reload, enter modal (if any) for the front app (saves a redundant cmd+tab)
 	local frontApp = Application.frontmostApplication()
 	if frontApp then
 		appWatcherCallback(nil, Application.watcher.activated, frontApp)
 	end
 	appWatcher:start()
-	windowFilter:setFilters(transientApps or {})
-	windowFilter:subscribe(allowedWindowFilterEvents, windowFilterCallback)
+	-- windowFilter:setFilters(transientApps or {})
+	-- windowFilter:subscribe(allowedWindowFilterEvents, windowFilterCallback)
 	return self
 end
 

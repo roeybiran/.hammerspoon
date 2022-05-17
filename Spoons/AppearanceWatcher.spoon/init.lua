@@ -65,6 +65,9 @@ end
 --- AppearanceWatcher:stop()
 --- Method
 --- Stops this module.
+---
+--- Returns:
+---  * the module object.
 function obj:stop()
 	watcher:stop()
 	watcher = nil
@@ -74,6 +77,9 @@ end
 --- AppearanceWatcher:start()
 --- Method
 --- starts this module.
+---
+--- Returns:
+---  * the module object.
 function obj:start()
 	watcher =
 		PathWatcher.new(
@@ -89,6 +95,9 @@ end
 --- AppearanceWatcher:toggle()
 --- Method
 --- Toggles this module.
+---
+--- Returns:
+---  * the module object.
 function obj:toggle()
 	if obj:isActive() then
 		settings.set(appearanceWatcherActiveKey, false)
