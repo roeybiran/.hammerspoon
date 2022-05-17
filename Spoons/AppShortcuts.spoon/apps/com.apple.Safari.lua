@@ -36,7 +36,7 @@ local function observerCallback(observerObj, uiElement, notifName, moreInfo)
 	end
 
 	if notifName == "AXTitleChanged" then
-		local currentSettings = Settings.get(layoutsPerURLKey)
+		local currentSettings = Settings.get(layoutsPerURLKey) or {}
 		local currentLayout = KeyCodes.currentLayout()
 		if prevUrl then
 			if currentLayout == defaultLayout then
