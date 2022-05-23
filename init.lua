@@ -92,7 +92,7 @@ spoon.WifiWatcher:start(knownNetworks)
 spoon.StatusBar:start()
 spoon.KeyboardLayoutManager:start(layoutSwitcherIgnored, "ABC")
 spoon.GlobalShortcuts:bindHotKeys(globalShortcuts.globals)
-spoon.WindowManager:bindHotKeys(globalShortcuts.windowManager)
+spoon.WindowManager:bindHotKeys(globalShortcuts.windowManager):start()
 spoon.NotificationCenter:bindHotKeys(globalShortcuts.notificationCenter)
 
 hs.hotkey.bind(

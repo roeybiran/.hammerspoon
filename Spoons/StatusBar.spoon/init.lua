@@ -1,12 +1,12 @@
 --- === StatusBar ===
 ---
 --- Enables a status menu item with the familiar Hammerspoon logo, but with customizable contents and a flashing mode to signal ongoing operations.
-local HSApplication = require("hs.application")
+local Application = require("hs.application")
 local HSMenubar = require("hs.menubar")
-local HSTimer = require("hs.timer")
-local HSURLEvent = require("hs.urlevent")
 local Window = require("hs.window")
+local FNUtils = require("hs.fnutils")
 local spoon = spoon
+local hs = hs
 
 local function script_path()
 	local str = debug.getinfo(2, "S").source:sub(2)
@@ -24,27 +24,28 @@ obj.license = "MIT - https://opensource.org/licenses/MIT"
 
 local menuBarItem
 local spoonPath = script_path()
-local regularIconPath = spoonPath .. "/statusicon.pdf"
-local fadedIconPath = spoonPath .. "/statusicon_faded.pdf"
-local current = "regular"
-local flashingIconTimer
-local taskQueue = 0
+local iconPath = spoonPath .. "/statusicon.pdf"
+local browsers = {
+	"com.apple.Safari",
+	"com.brave.Browser"
+}
+local defaultBrowserID = "com.apple.Safari"
+
+local URLEvent = require("hs.urlevent")
+local Image = require("hs.image")
+local function installURLHandler()
+	URLEvent.setDefaultHandler("http")
+	URLEvent.httpCallback = function(scheme, host, params, fullURL, senderPID)
+		URLEvent.openURLWithBundle(fullURL, defaultBrowserID)
+	end
+end
 
 local function mainMenu()
 	return {
 		{
-			title = "Turn On Window Highlighting",
-			fn = function()
-				Window.highlight.start()
-			end
+			title = "General Settings",
+			disabled = true
 		},
-		{
-			title = "Turn Off Window Highlighting",
-			fn = function()
-				Window.highlight.stop()
-			end
-		},
-		{title = "-"},
 		{
 			title = "Watch for config changes",
 			fn = function()
@@ -66,69 +67,56 @@ local function mainMenu()
 			end,
 			checked = spoon.WifiWatcher:isActive()
 		},
+		{
+			title = "Window highlighting",
+			fn = function()
+				Window.highlight.toggle()
+			end
+		},
+		{title = "-"},
+		{
+			title = "Default Browser",
+			disabled = true
+		},
+		{
+			title = "Safari",
+			fn = function(_, _)
+				defaultBrowserID = "com.apple.Safari"
+			end,
+			image = Image.imageFromAppBundle("com.apple.Safari"),
+			checked = defaultBrowserID == "com.apple.Safari"
+		},
+		{
+			title = "Brave",
+			fn = function(_, _)
+				defaultBrowserID = "com.brave.Browser"
+			end,
+			image = Image.imageFromAppBundle("com.brave.Browser"),
+			checked = defaultBrowserID == "com.brave.Browser"
+		},
 		{title = "-"},
 		{
 			title = "Quit Hammerspoon",
 			fn = function()
-				HSApplication("Hammerspoon"):kill()
+				Application("Hammerspoon"):kill()
 			end
 		}
 	}
 end
 
--- StatusBar.menuTable
--- Variable
--- TODO
-obj.menuTable = nil
-
--- StatusBar:addTask()
--- Method
--- TODO
-function obj:addTask()
-	if not flashingIconTimer:running() then
-		flashingIconTimer:start()
-	end
-	taskQueue = taskQueue + 1
-	return self
-end
-
--- StatusBar:removeTask()
--- Method
--- TODO
-function obj:removeTask()
-	taskQueue = taskQueue - 1
-	if taskQueue < 1 then
-		menuBarItem:setIcon(regularIconPath)
-		flashingIconTimer:stop()
-	end
-	return self
-end
-
 function obj:start()
-	menuBarItem = HSMenubar.new():setIcon(regularIconPath):setMenu(mainMenu)
-	flashingIconTimer =
-		HSTimer.new(
-		0.2,
-		function()
-			if current == "regular" then
-				menuBarItem:setIcon(regularIconPath)
-				current = "faded"
+	installURLHandler()
+	menuBarItem = HSMenubar.new():setIcon(iconPath):setMenu(mainMenu)
+	URLEvent.bind(
+		"set-default-browser",
+		function(eventName, params, _)
+			if params and params.id and FNUtils.contains(browsers, params.id) then
+				defaultBrowserID = params.id
+				local theApp = Application.get(defaultBrowserID)
+				hs.notify.show("Default Browser Changed", (theApp and theApp:name()) or params.id, "")
 			else
-				menuBarItem:setIcon(fadedIconPath)
-				current = "regular"
+				hs.showError("Unrecognized browser: " .. (params.id or "NULL"))
 			end
-		end
-	)
-	HSURLEvent.bind(
-		"start-task-with-progress",
-		function()
-			obj:addTask()
-		end
-	)
-	HSURLEvent.bind(
-		"stop-task-with-progress",
-		function()
-			obj:removeTask()
 		end
 	)
 	return self
