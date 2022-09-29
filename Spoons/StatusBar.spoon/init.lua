@@ -22,22 +22,35 @@ obj.author = "roeybiran <roeybiran@icloud.com>"
 obj.homepage = "https://github.com/Hammerspoon/Spoons"
 obj.license = "MIT - https://opensource.org/licenses/MIT"
 
-local menuBarItem
+obj.menuBarItem = nil
 local spoonPath = script_path()
 local iconPath = spoonPath .. "/statusicon.pdf"
-local browsers = {
-	"com.apple.Safari",
-	"com.brave.Browser"
-}
-local defaultBrowserID = "com.apple.Safari"
 
-local URLEvent = require("hs.urlevent")
-local Image = require("hs.image")
+local key = "RBDefaultBrowserBundleID"
+local defaultBrowserID = hs.settings.get(key) or "com.apple.Safari"
+
 local function installURLHandler()
-	URLEvent.setDefaultHandler("http")
-	URLEvent.httpCallback = function(scheme, host, params, fullURL, senderPID)
-		URLEvent.openURLWithBundle(fullURL, defaultBrowserID)
+	hs.urlevent.setDefaultHandler("http")
+	hs.urlevent.httpCallback = function(scheme, host, params, fullURL, senderPID)
+		hs.urlevent.openURLWithBundle(fullURL, defaultBrowserID)
 	end
+end
+
+local bundles = {"com.apple.Safari", "com.brave.Browser"}
+local browsers = {}
+for _, value in ipairs(bundles) do
+	table.insert(
+		browsers,
+		{
+			title = hs.application.nameForBundleID(value),
+			fn = function(_, _)
+				defaultBrowserID = value
+				hs.settings.set(key, value)
+			end,
+			image = hs.image.imageFromAppBundle(value),
+			checked = defaultBrowserID == value
+		}
+	)
 end
 
 local function mainMenu()
@@ -68,7 +81,7 @@ local function mainMenu()
 			checked = spoon.WifiWatcher:isActive()
 		},
 		{
-			title = "Window highlighting",
+			title = "Focused window highlighting",
 			fn = function()
 				Window.highlight.toggle()
 			end
@@ -78,22 +91,8 @@ local function mainMenu()
 			title = "Default Browser",
 			disabled = true
 		},
-		{
-			title = "Safari",
-			fn = function(_, _)
-				defaultBrowserID = "com.apple.Safari"
-			end,
-			image = Image.imageFromAppBundle("com.apple.Safari"),
-			checked = defaultBrowserID == "com.apple.Safari"
-		},
-		{
-			title = "Brave",
-			fn = function(_, _)
-				defaultBrowserID = "com.brave.Browser"
-			end,
-			image = Image.imageFromAppBundle("com.brave.Browser"),
-			checked = defaultBrowserID == "com.brave.Browser"
-		},
+		browsers[1],
+		browsers[2],
 		{title = "-"},
 		{
 			title = "Quit Hammerspoon",
@@ -106,8 +105,10 @@ end
 
 function obj:start()
 	installURLHandler()
-	menuBarItem = HSMenubar.new():setIcon(iconPath):setMenu(mainMenu)
-	URLEvent.bind(
+
+	obj.menuBarItem = HSMenubar.new():setIcon(iconPath):setMenu(mainMenu)
+
+	hs.urlevent.bind(
 		"set-default-browser",
 		function(eventName, params, _)
 			if params and params.id and FNUtils.contains(browsers, params.id) then

@@ -3,16 +3,6 @@ local window = require("hs.window")
 local ipc = require("hs.ipc")
 local hs = hs
 
--- PERSONAL SETTINGS
-local knownNetworks = {
-	"Biran",
-	"Biran2",
-	"BiranTLV",
-	"rbrt",
-	"Shely_or",
-	"Harelzabari"
-}
-
 local transientApps = {
 	["LaunchBar"] = {allowRoles = "AXSystemDialog"},
 	["1Password 7"] = {allowTitles = "1Password mini"},
@@ -88,7 +78,7 @@ spoon.AppQuitter:start(appQuitterConfig)
 spoon.AppShortcuts:start(transientApps)
 spoon.ConfigWatcher:start()
 spoon.DownloadsWatcher:start(require "downloadswatcher_rules")
-spoon.WifiWatcher:start(knownNetworks)
+spoon.WifiWatcher:start(require "wifiwatcher_rules")
 spoon.StatusBar:start()
 spoon.KeyboardLayoutManager:start(layoutSwitcherIgnored, "ABC")
 spoon.GlobalShortcuts:bindHotKeys(globalShortcuts.globals)
