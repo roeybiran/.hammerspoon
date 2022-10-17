@@ -20,36 +20,13 @@ local appearanceWatcherActiveKey = "RBAppearanceWatcherIsActive"
 local cachedInterfaceStyleKey = "RBAppearanceWatcherCachedInterfaceStyle"
 local appearancePlist = os.getenv("HOME") .. "/Library/Preferences/.GlobalPreferences.plist"
 
-local function script_path()
-	local str = debug.getinfo(2, "S").source:sub(2)
-	return str:match("(.*/)")
-end
+local function appearanceChangedCallback(isDarkMode)
+	-- launchbar theme
+	local launchbarTheme = (isDarkMode and "at.obdev.LaunchBar.theme.Dark") or "at.obdev.LaunchBar.theme.Default"
+	os.execute(string.format('/usr/bin/defaults write at.obdev.LaunchBar Theme -string "%s"', launchbarTheme))
 
-local function setStyle()
-	local currentSystemStyle = Host.interfaceStyle() or "Light"
-	local cachedStyle = settings.get(cachedInterfaceStyleKey)
-	if currentSystemStyle ~= cachedStyle then
-		local msg =
-			string.format("AppearanceWatcher: detected a system style change, from %s to %s", cachedStyle, currentSystemStyle)
-		print(msg)
-		settings.set(cachedInterfaceStyleKey, currentSystemStyle)
-		task.new(
-			script_path() .. "/appearance.sh",
-			function(exitCode, stdOut, stdErr)
-				if exitCode > 0 then
-					msg =
-						string.format(
-						[[AppearanceWatcher: appearance.sh exited with non-zero exit code (%s). stdout: %s, stderr: %s]],
-						exitCode,
-						stdOut,
-						stdErr
-					)
-					print(msg)
-				end
-			end,
-			{currentSystemStyle:lower()}
-		):start()
-	end
+	-- Hammerspoon's console
+	hs.console.darkMode(isDarkMode)
 end
 
 function obj:init()
@@ -85,10 +62,17 @@ function obj:start()
 		PathWatcher.new(
 		appearancePlist,
 		function()
-			setStyle()
+			local currentSystemStyle = Host.interfaceStyle() or "Light"
+			local cachedStyle = settings.get(cachedInterfaceStyleKey)
+			if currentSystemStyle ~= cachedStyle then
+				print(
+					string.format("AppearanceWatcher: detected a system style change, from %s to %s", cachedStyle, currentSystemStyle)
+				)
+				settings.set(cachedInterfaceStyleKey, currentSystemStyle)
+				appearanceChangedCallback(currentSystemStyle == "Dark")
+			end
 		end
 	):start()
-	setStyle()
 	return self
 end
 
