@@ -3,49 +3,9 @@ local window = require("hs.window")
 local ipc = require("hs.ipc")
 local hs = hs
 
-local transientApps = {
-	["LaunchBar"] = {allowRoles = "AXSystemDialog"},
-	["1Password 7"] = {allowTitles = "1Password mini"},
-	["Spotlight"] = {allowRoles = "AXSystemDialog"},
-	["Paletro"] = {allowRoles = "AXSystemDialog"},
-	["Contexts"] = false,
-	["Emoji & Symbols"] = true
-}
+local config = require('config')
 
 local layoutSwitcherIgnored = {"at.obdev.LaunchBar", "com.contextsformac.Contexts"}
-
-local appQuitterConfig = {
-	launchdRunInterval = 600, --- 10 minutes
-	rules = require("appquitter_rules"),
-	defaultQuitInterval = 14400, -- 4 hours
-	defaultHideInterval = 1800 -- 30 minutes
-}
-
-local hyper = {"shift", "cmd", "alt", "ctrl"}
-
-local globalShortcuts = {
-	globals = {
-		rightClick = {hyper, "o"},
-		focusDock = {
-			{"cmd", "alt"},
-			"d"
-		}
-	},
-	windowManager = {
-		pushLeft = {hyper, "left"},
-		pushRight = {hyper, "right"},
-		pushUp = {hyper, "up"},
-		pushDown = {hyper, "down"},
-		maximize = {hyper, "return"},
-		center = {hyper, "c"}
-	},
-	notificationCenter = {
-		firstButton = {hyper, "1"},
-		secondButton = {hyper, "2"},
-		thirdButton = {hyper, "3"},
-		toggle = {hyper, "n"}
-	}
-}
 
 -- HAMMERSPOON SETTINGS, VARIABLES
 hs.allowAppleScript(true)
@@ -74,31 +34,31 @@ if iterFn then
 end
 
 -- start (ORDER MATTERS!)
-spoon.AppQuitter:start(appQuitterConfig)
-spoon.AppShortcuts:start(transientApps)
+spoon.AppQuitter:start(config.appQuitter)
+spoon.AppShortcuts:start(config.transientApps)
 spoon.ConfigWatcher:start()
 spoon.DownloadsWatcher:start(require "downloadswatcher_rules")
 spoon.WifiWatcher:start(require "wifiwatcher_rules")
 spoon.URLHandler:start()
 spoon.StatusBar:start()
 spoon.KeyboardLayoutManager:start(layoutSwitcherIgnored, "ABC")
-spoon.GlobalShortcuts:bindHotKeys(globalShortcuts.globals)
-spoon.WindowManager:bindHotKeys(globalShortcuts.windowManager):start()
-spoon.NotificationCenter:bindHotKeys(globalShortcuts.notificationCenter)
+spoon.GlobalShortcuts:bindHotKeys(config.globalShortcuts)
+spoon.WindowManager:bindHotKeys(config.windowManagerShortcuts):start()
+spoon.NotificationCenter:bindHotKeys(config.notificationCenterShortcuts)
+spoon.AppearanceWatcher:start(config.appearanceWatcherCallback)
 
+local hyper = {"shift", "cmd", "alt", "ctrl"}
 hs.hotkey.bind(
 	hyper,
 	"t",
 	function()
-		hs.osascript.applescript(
-			[[
-			if app "iTerm" is not frontmost then
-				tell app "iTerm" to activate
-			else
-				tell app "System Events" to set visible of application process "iTerm2" to false
-			end if
-			]]
-		)
+		local termBundleID = "com.googlecode.iterm2"
+		local app = hs.application.get(termBundleID)
+		if app:isFrontmost() then
+			app:hide()
+		else
+			hs.application.launchOrFocusByBundleID(termBundleID)
+		end
 	end,
 	nil,
 	nil

@@ -1,5 +1,5 @@
 local KeyCodes = require("hs.keycodes")
-local util = require("rb.util")
+local util = require("util.util")
 
 local obj = {}
 local _appObj = nil

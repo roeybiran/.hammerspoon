@@ -1,4 +1,4 @@
-local UI = require("rb.ui")
+local UI = require("util.ax")
 
 return function(appObj)
 	local focusedWindow = appObj:focusedWindow()

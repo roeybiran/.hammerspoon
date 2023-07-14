@@ -1,5 +1,5 @@
 local AX = require("hs.axuielement")
-local Util = require("rb.util")
+local Util = require("util.util")
 
 local obj = {}
 

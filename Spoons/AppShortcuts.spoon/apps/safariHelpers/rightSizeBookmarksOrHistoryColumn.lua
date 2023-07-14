@@ -1,5 +1,5 @@
-local UI = require("rb.ui")
-local Util = require("rb.util")
+local UI = require("util.ax")
+local Util = require("util.util")
 
 return function(appObj)
 	local firstColumn =

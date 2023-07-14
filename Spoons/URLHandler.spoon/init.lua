@@ -11,6 +11,7 @@ local DEFAULTS_KEY = "RBDefaultBrowserBundleID"
 local browsersBundleIDs = {"com.apple.Safari", "com.brave.Browser", "company.thebrowser.Browser"}
 
 function obj:start()
+	if true then return end
 	hs.urlevent.setDefaultHandler("http")
 
 	hs.urlevent.httpCallback = function(scheme, host, params, fullURL, senderPID)

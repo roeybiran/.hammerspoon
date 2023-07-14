@@ -2,9 +2,8 @@ return {
 	"Biran",
 	"Biran2",
 	"BiranTLV",
-	"rbrt",
-	"Shely_or",
-	"Harelzabari",
+	"roey",
 	"Anchor1",
-	"Anchor_new"
+	"Anchor_new",
+	"Anchor_Secure"
 }

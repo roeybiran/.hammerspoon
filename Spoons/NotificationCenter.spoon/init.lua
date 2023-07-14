@@ -1,7 +1,7 @@
 --- === NotificationCenter ===
 ---
 --- Notification Center automations.
-local ui = require("rb.ui")
+local ui = require("util.ax")
 local ax = require("hs.axuielement")
 local application = require("hs.application")
 local Mouse = require("hs.mouse")

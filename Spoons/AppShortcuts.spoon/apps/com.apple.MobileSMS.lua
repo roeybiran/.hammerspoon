@@ -1,6 +1,6 @@
-local UI = require("rb.ui")
-local Util = require("rb.util")
-local fuzzyChooser = require("rb.fuzzychooser")
+local UI = require("util.ax")
+local Util = require("util.util")
+local fuzzyChooser = require("util.fuzzychooser")
 
 local obj = {}
 local _appObj = nil

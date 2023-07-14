@@ -3,7 +3,7 @@
 --- Various hotkey-bound automations that are not app-specific.
 local application = require("hs.application")
 local ax = require("hs.axuielement")
-local UI = require("rb.ui")
+local UI = require("util.ax")
 local Keycodes = require("hs.keycodes")
 
 local hs = hs

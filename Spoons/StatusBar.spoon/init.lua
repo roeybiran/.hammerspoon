@@ -32,13 +32,6 @@ function obj:start()
 					checked = spoon.ConfigWatcher:isActive()
 				},
 				{
-					title = "Watch for appearance changes",
-					fn = function()
-						spoon.AppearanceWatcher:toggle()
-					end,
-					checked = spoon.AppearanceWatcher:isActive()
-				},
-				{
 					title = "Mute on unknown networks",
 					fn = function()
 						spoon.WifiWatcher:toggle()

@@ -1,4 +1,4 @@
-local UI = require("rb.ui")
+local UI = require("util.ax")
 local AX = require("hs.axuielement")
 
 return function(appObj)

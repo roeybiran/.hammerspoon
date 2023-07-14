@@ -1,8 +1,8 @@
 local osascript = require("hs.osascript")
 local ax = require("hs.axuielement")
-local ui = require("rb.ui")
-local fuzzyChooser = require("rb.fuzzychooser")
-local Util = require("rb.util")
+local ui = require("util.ax")
+local fuzzyChooser = require("util.fuzzychooser")
+local Util = require("util.util")
 local FN = require("hs.fnutils")
 
 local obj = {}

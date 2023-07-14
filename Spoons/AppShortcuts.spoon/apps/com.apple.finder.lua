@@ -3,9 +3,9 @@ local geometry = require("hs.geometry")
 local osascript = require("hs.osascript")
 local timer = require("hs.timer")
 local ax = require("hs.axuielement")
-local ui = require("rb.ui")
-local Util = require("rb.util")
-local GlobalChooser = require("rb.fuzzychooser")
+local ui = require("util.ax")
+local Util = require("util.util")
+local GlobalChooser = require("util.fuzzychooser")
 local FNUtils = require("hs.fnutils")
 
 local obj = {}
