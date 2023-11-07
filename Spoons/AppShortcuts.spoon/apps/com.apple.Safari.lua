@@ -15,7 +15,7 @@ local _appObj
 local observer
 
 local layoutsPerURLKey = "RBSafariLayoutsForURL"
-local inputSourceSwitchExcludedUrls = {"bookmarks://", "history://", "favorites://", nil, ""}
+local inputSourceSwitchExcludedUrls = { "bookmarks://", "history://", "favorites://", nil, "" }
 local prevUrl
 local defaultLayout = "ABC"
 
@@ -97,56 +97,56 @@ obj.actions = {
 		action = function()
 			moveTab("left")
 		end,
-		hotkey = {"ctrl", ","}
+		hotkey = { "ctrl", "," }
 	},
 	--- moveTabRight - moves the focused tab one position to the right.
 	moveTabRight = {
 		action = function()
 			moveTab("right")
 		end,
-		hotkey = {"ctrl", "."}
+		hotkey = { "ctrl", "." }
 	},
 	--- newWindow - ensures a new window will be opened rather than a tab. Useful when the "Prefer tabs" setting in the Dock Preference Pane is set to "always".
 	newWindow = {
 		action = function()
-			_appObj:selectMenuItem({"File", "New Window"})
+			_appObj:selectMenuItem({ "File", "New Window" })
 		end,
-		hotkey = {"cmd", "n"}
+		hotkey = { "cmd", "n" }
 	},
 	--- goToNextPage - navigates to a web page's next page, if applicable.
 	goToNextPage = {
 		action = function()
 			performPageNavigation("next")
 		end,
-		hotkey = {"ctrl", "n"}
+		hotkey = { "ctrl", "n" }
 	},
 	--- goToPreviousPage - navigates to a web page's previous page, if applicable.
 	goToPreviousPage = {
 		action = function()
 			performPageNavigation("previous")
 		end,
-		hotkey = {"ctrl", "p"}
+		hotkey = { "ctrl", "p" }
 	},
 	--- newBookmarksFolder - creates a new bookmarks folder. Works only while viewing bookmarks.
 	newBookmarksFolder = {
 		action = function()
 			newBookmarksFolder(_appObj)
 		end,
-		hotkey = {{"cmd", "shift"}, "n"}
+		hotkey = { { "cmd", "shift" }, "n" }
 	},
 	--- rightSizeBookmarksOrHistoryColumn - sizes to fit the first column of the bookmarks/history view.
 	rightSizeBookmarksOrHistoryColumn = {
 		action = function()
 			rightSizeBookmarksOrHistoryColumn(_appObj)
 		end,
-		hotkey = {"alt", "r"}
+		hotkey = { "alt", "r" }
 	},
 	--- firstSearchResult - in a history/bookmarks view and when the search field is focused, moves focus the 1st search result.
 	firstSearchResult = {
 		action = function()
 			focusFirstSearchResult(_appObj, obj.modal)
 		end,
-		hotkey = {{}, "tab"}
+		hotkey = { {}, "tab" }
 	}
 }
 
@@ -154,9 +154,9 @@ function obj:start(appObj)
 	_appObj = appObj
 	obj.modal:enter()
 
-	setupObserver(appObj)
+	-- setupObserver(appObj)
 	-- manually trigger once on app activation to switch to the proper layout
-	observerCallback(nil, nil, "AXTitleChanged", nil)
+	-- observerCallback(nil, nil, "AXTitleChanged", nil)
 	return self
 end
 

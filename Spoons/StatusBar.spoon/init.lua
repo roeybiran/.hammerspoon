@@ -34,20 +34,16 @@ function obj:start()
 				{
 					title = "Mute on unknown networks",
 					fn = function()
-						spoon.WifiWatcher:toggle()
+						local current = hs.settings.get("RBMuteSoundWhenJoiningUnknownNetworks")
+						hs.settings.set("RBMuteSoundWhenJoiningUnknownNetworks", not current)
 					end,
-					checked = spoon.WifiWatcher:isActive()
+					checked = hs.settings.get("RBMuteSoundWhenJoiningUnknownNetworks")
 				},
 				{
 					title = "Focused window highlighting",
 					fn = function()
 						hs.window.highlight.toggle()
 					end
-				},
-				{title = "-"},
-				{
-					title = "Default Browser",
-					menu = spoon.URLHandler:generateMenuItem()
 				},
 				{title = "-"},
 				{

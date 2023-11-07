@@ -1,3 +1,4 @@
 {
-  "vscode-lua-format.configPath": ".lua-format"
+  "vscode-lua-format.configPath": ".lua-format",
+  "Lua.completion.autoRequire": false
 }

@@ -31,6 +31,15 @@ local function focusDock()
 	UI.getUIElement(application("Dock"), {{"AXList", 1}}):setAttributeValue("AXFocused", true)
 end
 
+local function openTerminal()
+	local termBundleID = "com.googlecode.iterm2"
+	local app = hs.application.get(termBundleID)
+	if app and app:isFrontmost() then
+		app:hide()
+	else
+		hs.application.launchOrFocusByBundleID(termBundleID)
+	end
+end
 --- Globals:bindHotKeys(_mapping)
 --- Method
 --- This module offers the following functionalities:
@@ -49,6 +58,9 @@ function obj:bindHotKeys(_mapping)
 		end,
 		focusDock = function()
 			focusDock()
+		end,
+		openTerminal = function()
+			openTerminal()
 		end
 	}
 	hs.spoons.bindHotkeysToSpec(def, _mapping)
