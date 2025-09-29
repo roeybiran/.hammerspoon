@@ -62,4 +62,31 @@ function obj:strictShortcut(keyBinding, app, modal, conditionalFunction, success
   end
 end
 
+function obj:navigateThroughGenericList(list, direction)
+	local children = list:attributeValue("AXChildren")
+	local childrenCount = obj.tableCount(children) - 1 -- decrement header row element
+	local newValue = 1                               -- default to no selection -> select the first child
+	local selectedChild =
+		hs.fnutils.find(
+			children,
+			function(e)
+				return e:attributeValue("AXSelected")
+			end
+		)
+	if selectedChild then
+		local selectedIndex = hs.fnutils.indexOf(children, selectedChild)
+		if direction == "down" then
+			newValue = selectedIndex + 1
+			if newValue > childrenCount then
+				newValue = 1
+			end
+		else
+			newValue = selectedIndex - 1
+			if newValue == 0 then
+				newValue = childrenCount
+			end
+		end
+	end
+	list:setAttributeValue("AXSelectedRows", { children[newValue] })
+end
 return obj

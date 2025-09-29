@@ -19,22 +19,12 @@ obj.author = "roeybiran <roeybiran@icloud.com>"
 obj.homepage = "https://github.com/Hammerspoon/Spoons"
 obj.license = "MIT - https://opensource.org/licenses/MIT"
 
-local function toggle()
-	ui.getUIElement(
-		application("Control Center"),
-		{
-			{"AXMenuBar", 1},
-			{"AXMenuBarItem", 1}
-		}
-	):performAction("AXPress")
-end
-
 local function moveCursorToBanner(theWindow, shouldClick)
 	local windowPosition = theWindow:attributeValue("AXPosition")
 	local x = windowPosition.x + 40
 	local y = windowPosition.y + 40
 	local originalPosition = Mouse.absolutePosition()
-	local newPosition = {x = x, y = y}
+	local newPosition = { x = x, y = y }
 	Mouse.absolutePosition(newPosition)
 	if shouldClick then
 		eventtap.leftClick(newPosition)
@@ -47,28 +37,38 @@ local function moveCursorToBanner(theWindow, shouldClick)
 	)
 end
 
+function obj:toggle()
+	ui.getUIElement(
+		application("Control Center"),
+		{
+			{ "AXMenuBar",     1 },
+			{ "AXMenuBarItem", 1 }
+		}
+	):performAction("AXPress")
+end
+
 -- the accessibility structure of notifications has changed drastically in Big Sur:
 -- all banners are nested under the "AXOpaqueProviderGroup", where each banner is an "AXGroup"
-local function clickButton(theButton)
+function obj:clickButton(theButton)
 	local app = application.applicationsForBundleID("com.apple.notificationcenterui")[1]
 	local axApp = ax.applicationElement(app)
 	local container =
-		ui.getUIElement(
-		axApp,
-		{
-			{"AXWindow", 1},
-			{"AXScrollArea", 1},
-			{"AXOpaqueProviderGroup", 1}
-		}
-	):attributeValue("AXChildren")
+			ui.getUIElement(
+				axApp,
+				{
+					{ "AXWindow",              1 },
+					{ "AXScrollArea",          1 },
+					{ "AXOpaqueProviderGroup", 1 }
+				}
+			):attributeValue("AXChildren")
 
 	local banners =
-		FN.filter(
-		container,
-		function(element)
-			return element:attributeValue("AXRole") == "AXGroup"
-		end
-	)
+			FN.filter(
+				container,
+				function(element)
+					return element:attributeValue("AXRole") == "AXGroup"
+				end
+			)
 
 	for _, banner in ipairs(banners) do
 		-- button "3" -> click on the banner and return
@@ -86,11 +86,11 @@ local function clickButton(theButton)
 				local targetButton
 				-- the close button
 				if theButton == 1 then
-					targetButton = ui.getUIElement(banner, {{"AXButton", 1}})
+					targetButton = ui.getUIElement(banner, { { "AXButton", 1 } })
 				end
 				-- the "action" button
 				if theButton == 2 then
-					targetButton = ui.getUIElement(banner, {{"AXButton", 3}})
+					targetButton = ui.getUIElement(banner, { { "AXButton", 3 } })
 				end
 				targetButton:performAction("AXPress")
 			end
@@ -123,16 +123,16 @@ end
 function obj:bindHotKeys(_mapping)
 	local def = {
 		firstButton = function()
-			clickButton(1)
+			obj:clickButton(1)
 		end,
 		secondButton = function()
-			clickButton(2)
+			obj:clickButton(2)
 		end,
 		thirdButton = function()
-			clickButton(3)
+			obj:clickButton(3)
 		end,
 		toggle = function()
-			toggle()
+			obj:toggle()
 		end
 	}
 	hs.spoons.bindHotkeysToSpec(def, _mapping)

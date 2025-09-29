@@ -1,6 +1,5 @@
 local FS = require "hs.fs"
 local Task = require "hs.task"
-local FNUtils = require "hs.fnutils"
 
 --- helpers
 local function script_path()
@@ -9,7 +8,7 @@ local function script_path()
 end
 
 local function stripExtension(path)
-	local splitted = FNUtils.split(path, ".", true)
+	local splitted = hs.fnutils.split(path, ".", true)
 	return table.unpack(splitted, 1, #splitted - 1)
 end
 
@@ -71,17 +70,17 @@ local function renamePdfBasedOnText(path, text, rules)
 end
 
 local function handlePdf(path, rules)
-	local script = script_path() .. "/get_pdf_text.py"
-	Task.new(
-		script,
-		function(exit, textResult, stderr)
-			if exit ~= 0 then
-				print(stderr)
-			end
-			renamePdfBasedOnText(path, textResult, rules)
-		end,
-		{path}
-	):start()
+	-- local script = script_path() .. "/get_pdf_text.py"
+	-- Task.new(
+	-- 	script,
+	-- 	function(exit, textResult, stderr)
+	-- 		if exit ~= 0 then
+	-- 			print(stderr)
+	-- 		end
+	-- 		renamePdfBasedOnText(path, textResult, rules)
+	-- 	end,
+	-- 	{path}
+	-- ):start()
 end
 
 local function handleGz(path)

@@ -23,8 +23,6 @@ function obj:init()
 		"AppleInterfaceThemeChangedNotification",
 		nil
 	)
-
-
 	return self
 end
 

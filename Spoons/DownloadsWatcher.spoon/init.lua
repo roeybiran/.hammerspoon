@@ -3,7 +3,6 @@
 --- Monitor the ~/Downloads folder, and execute a shell script that accepts newly downloaded files as arguments.
 local PathWatcher = require("hs.pathwatcher")
 local FS = require("hs.fs")
-local FNUtils = require("hs.fnutils")
 local Settings = require("hs.settings")
 local Timer = require("hs.timer")
 
@@ -34,7 +33,7 @@ end
 
 -- return the displayName without the extension
 local function getNameWithoutExtension(path)
-	local splitted = FNUtils.split(path, ".", true)
+	local splitted = hs.fnutils.split(path, ".", true)
 	return table.unpack(splitted, 1, #splitted - 1)
 end
 
@@ -78,7 +77,7 @@ local function watcherCallback(paths, flagTables)
 			local ext = getExtension(fileNameAndExtension)
 			local attrs = FS.attributes(fullPath)
 			-- print(fileNameAndExtension, nameWithoutExt, attrs.inode, attrs.size, ext)
-			if not FNUtils.contains(processedDownloadsInodes, attrs.ino) then
+			if not hs.fnutils.contains(processedDownloadsInodes, attrs.ino) then
 				table.insert(processedDownloadsInodes, attrs.ino)
 				table.insert(filesPendingProcessing, {path = fullPath, exec = fnToExecute})
 			end

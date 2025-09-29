@@ -1,18 +1,14 @@
---- === KeyboardLayoutManager ===
+--- === KeyboardLayoutSwitcher ===
 ---
 --- A module that handles automatic keyboard layout switching under varying contexts.
 --- Saves the last used layout in a given app, and switches back to that layout when that app activates.
-local Keycodes = require("hs.keycodes")
-local Settings = require("hs.settings")
-local FNUtils = require("hs.fnutils")
-local Application = require("hs.application")
 
 local spoon = spoon
 
 local obj = {}
 local watcher
 obj.__index = obj
-obj.name = "KeyboardLayoutManager"
+obj.name = "KeyboardLayoutSwitcher"
 obj.version = "1.0"
 obj.author = "roeybiran <roeybiran@icloud.com>"
 obj.homepage = "https://github.com/Hammerspoon/Spoons"
@@ -25,14 +21,14 @@ local defaultsKey = "RBAppsLastActiveKeyboardLayouts"
 local previousApp
 
 local function appWatcherCallback(appName, event, app)
-	if event ~= Application.watcher.activated then
+	if event ~= hs.application.watcher.activated then
 		return
 	end
 
-	local settingsTable = Settings.get(defaultsKey) or {}
+	local settingsTable = hs.settings.get(defaultsKey) or {}
 	local currentApp = app:bundleID()
 	-- capture the layout before changing, it's essentially the last active layout for the previous app
-	local currentLayout = Keycodes.currentLayout()
+	local currentLayout = hs.keycodes.currentLayout()
 
 	if previousApp then
 		settingsTable[previousApp] = {
@@ -40,19 +36,19 @@ local function appWatcherCallback(appName, event, app)
 			["LastActiveKeyboardLayoutTimestamp"] = os.time(),
 			["LastActiveKeyboardLayout"] = currentLayout
 		}
-		Settings.set(defaultsKey, settingsTable)
+		hs.settings.set(defaultsKey, settingsTable)
 	end
 
 	previousApp = currentApp
 
 	local newLayout = (settingsTable[currentApp] or {})["LastActiveKeyboardLayout"] or _defaultLayout
 
-	if not FNUtils.contains(avoidSwitchingInputSourceOnActivation, currentApp) then
-		Keycodes.setLayout(newLayout)
+	if not hs.fnutils.contains(avoidSwitchingInputSourceOnActivation, currentApp) then
+		hs.keycodes.setLayout(newLayout)
 	end
 end
 
---- KeyboardLayoutManager:start(ignored)
+--- KeyboardLayoutSwitcher:start(ignored)
 --- Method
 --- Starts the module.
 ---
@@ -65,7 +61,7 @@ end
 function obj:start(ignored, defaultLayout)
 	_defaultLayout = defaultLayout
 	avoidSwitchingInputSourceOnActivation = ignored or {}
-	watcher = Application.watcher.new(appWatcherCallback)
+	watcher = hs.application.watcher.new(appWatcherCallback)
 	watcher:start()
 	return self
 end

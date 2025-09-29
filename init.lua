@@ -14,9 +14,7 @@ hs.ipc.cliUninstall()
 hs.ipc.cliInstall()
 hs.window.animationDuration = 0
 
--- SPOONS
-
--- load
+-- load spoons
 local iterFn, dirObj = hs.fs.dir("Spoons/")
 if iterFn then
 	for file in iterFn, dirObj do
@@ -27,18 +25,13 @@ if iterFn then
 	end
 end
 
-local layoutSwitcherIgnored = {"at.obdev.LaunchBar", "com.contextsformac.Contexts"}
-
--- start (ORDER MATTERS!)
-spoon.AppQuitter:start(config.appQuitter)
-spoon.AppShortcuts:start(config.transientApps)
+-- start spoons (order matters!)
 spoon.ConfigWatcher:start()
 spoon.DownloadsWatcher:start(require "downloadswatcher_rules")
 spoon.StatusBar:start()
--- spoon.KeyboardLayoutManager:start(layoutSwitcherIgnored, "ABC")
-spoon.GlobalShortcuts:bindHotKeys(config.globalShortcuts)
-spoon.WindowManager:bindHotKeys(config.windowManagerShortcuts):start()
-spoon.NotificationCenter:bindHotKeys(config.notificationCenterShortcuts)
+spoon.KeyboardLayoutSwitcher:start({}, "ABC")
+spoon.WindowManager:bindHotKeys(config.windowManagerShortcuts or {}):start()
+spoon.NotificationCenter:bindHotKeys(config.notificationCenterShortcuts or {})
 spoon.AppearanceWatcher:start(config.appearanceWatcherCallback)
 
-wifiWatcher = hs.wifi.watcher.new(config.wifiWatcherCallback):start()
+hs.wifi.watcher.new(config.wifiWatcherCallback):start()

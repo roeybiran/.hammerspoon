@@ -1,12 +1,5 @@
---- === Globals ===
----
---- Various hotkey-bound automations that are not app-specific.
-local application = require("hs.application")
-local ax = require("hs.axuielement")
-local UI = require("util.ax")
-local Keycodes = require("hs.keycodes")
-
-local hs = hs
+local ui = require("util.ax")
+local config = require("config")
 
 local obj = {}
 
@@ -17,22 +10,23 @@ obj.author = "roeybiran <roeybiran@icloud.com>"
 obj.homepage = "https://github.com/Hammerspoon/Spoons"
 obj.license = "MIT - https://opensource.org/licenses/MIT"
 
-local function focusMenuBar()
-	ax.systemElementAtPosition({0, 0}):attributeValue("AXParent")[2]:performAction("AXPress")
+function obj:focusMenuBar()
+	hs.axuielement.systemElementAtPosition({ 0, 0 }):attributeValue("AXParent")[2]:performAction("AXPress")
 end
 
-local function rightClick()
-	ax.applicationElement(application.frontmostApplication()):attributeValue("AXFocusedUIElement"):performAction(
-		"AXShowMenu"
-	)
+function obj:rightClick()
+	hs.axuielement.applicationElement(hs.application.frontmostApplication()):attributeValue("AXFocusedUIElement")
+			:performAction(
+				"AXShowMenu"
+			)
 end
 
-local function focusDock()
-	UI.getUIElement(application("Dock"), {{"AXList", 1}}):setAttributeValue("AXFocused", true)
+function obj:focusDock()
+	ui.getUIElement(hs.application("Dock"), { { "AXList", 1 } }):setAttributeValue("AXFocused", true)
 end
 
-local function openTerminal()
-	local termBundleID = "com.googlecode.iterm2"
+function obj:openTerminal()
+	local termBundleID = config.terminal
 	local app = hs.application.get(termBundleID)
 	if app and app:isFrontmost() then
 		app:hide()
@@ -40,6 +34,7 @@ local function openTerminal()
 		hs.application.launchOrFocusByBundleID(termBundleID)
 	end
 end
+
 --- Globals:bindHotKeys(_mapping)
 --- Method
 --- This module offers the following functionalities:
@@ -51,16 +46,16 @@ end
 function obj:bindHotKeys(_mapping)
 	local def = {
 		rightClick = function()
-			rightClick()
+			obj:rightClick()
 		end,
 		focusMenuBar = function()
-			focusMenuBar()
+			obj:focusMenuBar()
 		end,
 		focusDock = function()
-			focusDock()
+			obj:focusDock()
 		end,
 		openTerminal = function()
-			openTerminal()
+			obj:openTerminal()
 		end
 	}
 	hs.spoons.bindHotkeysToSpec(def, _mapping)
