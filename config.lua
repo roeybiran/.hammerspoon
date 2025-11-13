@@ -1,17 +1,8 @@
 local private = require("private.private")
 
 return {
-	-- terminal = "net.kovidgoyal.kitty",
 	terminal = "com.github.wez.wezterm",
-	appearanceWatcherCallback = function(isDarkMode)
-		-- -- local path = os.getenv("HOME") .. "/.scripts/colorscheme.sh";
-		-- local mode = "light"
-		-- if isDarkMode then
-		-- 	mode = "dark"
-		-- end
-		-- hs.task.new(path, function(exit, out, err) end,
-		-- { "--run", mode }):start()
-	end,
+	appearanceWatcherCallback = function(isDarkMode) end,
 	wifiWatcherCallback = function()
 		hs.timer.doAfter(
 			2,

@@ -3,7 +3,6 @@
 --- Notification Center automations.
 local ui = require("util.ax")
 local ax = require("hs.axuielement")
-local application = require("hs.application")
 local Mouse = require("hs.mouse")
 local eventtap = require("hs.eventtap")
 local Timer = require("hs.timer")
@@ -38,19 +37,21 @@ local function moveCursorToBanner(theWindow, shouldClick)
 end
 
 function obj:toggle()
-	ui.getUIElement(
-		application("Control Center"),
-		{
-			{ "AXMenuBar",     1 },
-			{ "AXMenuBarItem", 1 }
-		}
-	):performAction("AXPress")
+	local app = hs.application("com.apple.controlcenter")
+	local menuBar = hs.axuielement.applicationElement(app)[1]
+
+	for _, menuBarItem in ipairs(menuBar) do
+		if menuBarItem.AXDescription == "Clock" then
+			menuBarItem:doAXPress()
+			return
+		end
+	end
 end
 
 -- the accessibility structure of notifications has changed drastically in Big Sur:
 -- all banners are nested under the "AXOpaqueProviderGroup", where each banner is an "AXGroup"
 function obj:clickButton(theButton)
-	local app = application.applicationsForBundleID("com.apple.notificationcenterui")[1]
+	local app = hs.application.applicationsForBundleID("com.apple.notificationcenterui")[1]
 	local axApp = ax.applicationElement(app)
 	local container =
 			ui.getUIElement(
@@ -92,23 +93,12 @@ function obj:clickButton(theButton)
 				if theButton == 2 then
 					targetButton = ui.getUIElement(banner, { { "AXButton", 3 } })
 				end
+				if not targetButton then return end
 				targetButton:performAction("AXPress")
 			end
 		)
 
 		return
-
-		-- if theButton == 2 then
-		--   local button2 = ui.getUIElement(theWindow, {{"AXMenuButton", 1}})
-		--   if not button2 then
-		--     ui.getUIElement(theWindow, {{"AXButton", 2}}):performAction("AXPress")
-		--     return
-		--   end
-		--   ui.getUIElement(theWindow, {{"AXMenuButton", 1}}):setTimeout(0.2)
-		--       :performAction("AXPress")
-		--   button2:attributeValue("AXChildren")[1]:attributeValue("AXChildren")[1]:setAttributeValue(
-		--       "AXSelected", true)
-		-- end
 	end
 end
 

@@ -12,14 +12,7 @@ local function stripExtension(path)
 	return table.unpack(splitted, 1, #splitted - 1)
 end
 
--- https://stackoverflow.com/a/9102300
-local function dirname(str, sep)
-	local sep = sep or "/"
-	return str:match("(.*" .. sep .. ")")
-end
-
 local trash = os.getenv "HOME" .. "/.Trash/"
-
 ---
 
 local function moveToTrash(path)
@@ -59,41 +52,6 @@ local function handleZip(path)
 	):start()
 end
 
-local function renamePdfBasedOnText(path, text, rules)
-	local year
-	local month
-	for _, rule in ipairs(rules) do
-		for _, token in ipairs(rule.tokens) do
-			print(token)
-		end
-	end
-end
-
-local function handlePdf(path, rules)
-	-- local script = script_path() .. "/get_pdf_text.py"
-	-- Task.new(
-	-- 	script,
-	-- 	function(exit, textResult, stderr)
-	-- 		if exit ~= 0 then
-	-- 			print(stderr)
-	-- 		end
-	-- 		renamePdfBasedOnText(path, textResult, rules)
-	-- 	end,
-	-- 	{path}
-	-- ):start()
-end
-
-local function handleGz(path)
-	Task.new(
-		"/usr/bin/tar",
-		function(exit, out, err)
-			print(exit, out, err)
-			moveToTrash(path)
-		end,
-		{"-xvf", path, "-C", dirname(path)}
-	):start()
-end
-
 local function handleDmg(path)
 	Task.new(
 		script_path() .. "handle_dmg.sh",
@@ -103,81 +61,6 @@ local function handleDmg(path)
 		{path}
 	):start()
 end
-
-local pdfRenamingRules = {
-	{
-		targetName = "bezeqint",
-		tokens = {
-			"בזק בינלאומי"
-		}
-	},
-	{
-		targetName = "payme",
-		tokens = {
-			"פאיימי"
-		}
-	},
-	{
-		targetName = "avrech",
-		tokens = {
-			"אברך-אלון"
-		}
-	},
-	{
-		targetName = "bezeq",
-		tokens = {
-			"בזק החברה הישראלית לתקשורת"
-		}
-	},
-	{
-		targetName = "apple music",
-		tokens = {
-			"Apple Music"
-		}
-	},
-	{
-		targetName = "apple icloud",
-		tokens = {
-			"iCloud:"
-		}
-	},
-	{
-		targetName = "icount",
-		tokens = {
-			"אייקאונט מערכות"
-		}
-	},
-	{
-		targetName = "google",
-		tokens = {
-			"Google Workspace"
-		}
-	},
-	{
-		targetName = "upress",
-		tokens = {
-			"upress"
-		}
-	},
-	{
-		targetName = "pango",
-		tokens = {
-			"פנגו"
-		}
-	},
-	{
-		targetName = "meshulam",
-		tokens = {
-			"משולם"
-		}
-	},
-	{
-		targetName = "facebook",
-		tokens = {
-			"Facebook"
-		}
-	}
-}
 
 return {
 	{
