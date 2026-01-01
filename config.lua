@@ -1,7 +1,7 @@
 local private = require("private.private")
 
 return {
-	terminal = "com.github.wez.wezterm",
+	terminal = "com.mitchellh.ghostty",
 	appearanceWatcherCallback = function(isDarkMode) end,
 	wifiWatcherCallback = function()
 		hs.timer.doAfter(
