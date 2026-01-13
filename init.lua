@@ -35,3 +35,63 @@ spoon.NotificationCenter:bindHotKeys(config.notificationCenterShortcuts or {})
 spoon.AppearanceWatcher:start(config.appearanceWatcherCallback)
 
 hs.wifi.watcher.new(config.wifiWatcherCallback):start()
+
+function StartScreenCleaner()
+	local eventsToIgnore = {
+		hs.eventtap.event.types.leftMouseDown,
+		hs.eventtap.event.types.leftMouseUp,
+		hs.eventtap.event.types.mouseMoved
+	}
+
+	local eventTap = hs.eventtap.new({ "all", eventsToIgnore }, function()
+		return true
+	end
+	)
+
+	hs.webview.new(hs.screen.primaryScreen():fullFrame())
+		:level(hs.drawing.windowLevels.overlay)
+		:html([[
+			<!DOCTYPE html>
+			<html>
+			<head>
+				<meta charset="UTF-8">
+				<style>
+					* {
+						margin: 0;
+						padding: 0;
+						box-sizing: border-box;
+					}
+
+					body {
+						background: black;
+						width: 100vw;
+						height: 100vh;
+						display: flex;
+						justify-content: center;
+						align-items: center;
+					}
+
+					a {
+						color: white;
+					}
+				</style>
+			</head>
+			<body>
+				<a href="foo:bar">Exit Screen Cleaner</a>
+			</body>
+			</html>
+		]])
+		:policyCallback(function(_, webview, table)
+			local url = table.request.URL.url
+			if url == "about:blank" then
+				return true
+			else
+				webview:delete()
+				eventTap:stop()
+				return false
+			end
+		end)
+		:show()
+
+	eventTap:start()
+end
